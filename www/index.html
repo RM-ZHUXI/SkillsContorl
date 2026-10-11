@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Control · 控制台</title>
+<style>
+  :root {
+    --bg:        #0b0e14;
+    --panel:     #11151f;
+    --panel-2:   #161b28;
+    --border:    #232a3b;
+    --text:      #e6edf3;
+    --text-dim:  #8b949e;
+    --accent:    #4f9cf9;
+    --accent-2:  #7c5cff;
+    --ok:        #3fb950;
+    --err:       #f85149;
+    --warn:      #d29922;
+    --radius:    12px;
+    --shadow:    0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "PingFang SC", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(1200px 800px at 10% -10%, rgba(124,92,255,.12), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%,  rgba(79,156,249,.10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 24px 60px;
+  }
+
+  /* ---------- 顶部 ---------- */
+  header {
+    max-width: 1200px;
+    margin: 0 auto 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 20px;
+    box-shadow: 0 8px 20px rgba(79,156,249,.35);
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%, 100% { transform: scale(1);    box-shadow: 0 8px 20px rgba(79,156,249,.35); }
+    50%      { transform: scale(1.06); box-shadow: 0 10px 28px rgba(124,92,255,.5); }
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    transition: border-color .3s, color .3s;
+  }
+  .status-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim);
+    transition: background .3s, box-shadow .3s;
+  }
+  .status-pill.ok  { border-color: rgba(63,185,80,.35); color: #cbe6cf; }
+  .status-pill.ok .dot  { background: var(--ok); box-shadow: 0 0 0 0 rgba(63,185,80,.6);
+                          animation: pulse 1.6s ease-out infinite; }
+  .status-pill.err { border-color: rgba(248,81,73,.4); color: #ffd5d3; }
+  .status-pill.err .dot { background: var(--err); }
+
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(63,185,80,.55); }
+    100% { box-shadow: 0 0 0 10px rgba(63,185,80,0);   }
+  }
+
+  /* ---------- 布局 ---------- */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  @media (min-width: 960px) {
+    main { grid-template-columns: 1fr 1fr; }
+    main > .panel.span-2 { grid-column: span 2; }
+  }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeUp .5s ease forwards;
+  }
+  .panel:nth-child(1) { animation-delay: .05s; }
+  .panel:nth-child(2) { animation-delay: .15s; }
+  .panel:nth-child(3) { animation-delay: .25s; }
+  .panel:nth-child(4) { animation-delay: .35s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: none; }
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.015);
+    flex-wrap: wrap;
+  }
+
+  .panel-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .panel-title .icon {
+    width: 26px; height: 26px; border-radius: 8px;
+    display: grid; place-items: center;
+    font-size: 14px;
+    background: rgba(79,156,249,.15);
+    color: var(--accent);
+  }
+
+  .head-actions {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+
+  .panel-body { padding: 16px 20px 20px; }
+
+  /* ---------- 表格 ---------- */
+  .tbl-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  thead th {
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+  }
+  tbody tr {
+    transition: background .2s;
+  }
+  tbody tr:hover { background: rgba(79,156,249,.06); }
+  tbody tr.row-enter {
+    animation: rowIn .35s ease;
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  td.num { text-align: right; font-variant-numeric: tabular-nums; color: #b9c4d2; }
+  td.name { font-weight: 600; color: #dbe6f3; }
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    background: rgba(124,92,255,.15);
+    color: #b9a8ff;
+    border: 1px solid rgba(124,92,255,.25);
+  }
+
+  /* ---------- 内存值单元格（长值截断 + hover 显示完整） ---------- */
+  td.val-cell { max-width: 340px; }
+  .val {
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    color: #b9c4d2;
+    cursor: help;
+  }
+
+  .desc {
+    color: var(--text-dim);
+    font-size: 12.5px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+  }
+
+  /* ---------- 按钮 ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform .12s ease, background .2s, border-color .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover {
+    border-color: rgba(79,156,249,.5);
+    box-shadow: 0 4px 14px rgba(79,156,249,.18);
+    transform: translateY(-1px);
+  }
+  .btn:active { transform: translateY(0) scale(.98); }
+
+  .btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(79,156,249,.35);
+  }
+  .btn.primary:hover { box-shadow: 0 8px 24px rgba(124,92,255,.45); }
+
+  .btn.sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; gap: 6px; }
+  .btn.danger { border-color: rgba(248,81,73,.35); color: #ffd5d3; }
+  .btn.danger:hover {
+    border-color: rgba(248,81,73,.7);
+    box-shadow: 0 4px 14px rgba(248,81,73,.2);
+  }
+
+  .btn .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    display: none;
+    animation: spin .7s linear infinite;
+  }
+  .btn.loading .spinner { display: inline-block; }
+  .btn.loading .label   { opacity: .85; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- 表单控件 ---------- */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > label { font-size: 12px; color: var(--text-dim); }
+
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 9px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input::placeholder, textarea::placeholder { color: #5b6473; }
+  input:focus, textarea:focus, select:focus {
+    border-color: rgba(79,156,249,.6);
+    box-shadow: 0 0 0 3px rgba(79,156,249,.15);
+  }
+  textarea {
+    min-height: 84px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    line-height: 1.5;
+  }
+
+  .inline { display: flex; align-items: center; gap: 10px; }
+  .inline > input, .inline > select { flex: 1; min-width: 0; }
+
+  .row-actions {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  .result-text {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    word-break: break-all;
+    min-height: 16px;
+  }
+
+  /* ---------- 技能链：链式图形 UI（链带 = 端子 + 节点 + 连接线） ---------- */
+  .chain {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(255,255,255,.022), rgba(255,255,255,.004));
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    transition: border-color .25s, box-shadow .25s;
+  }
+  .chain:hover { border-color: rgba(79,156,249,.4); }
+  /* 整条链运行中：链带描边发光 + 连接线流动 */
+  .chain.running {
+    border-color: rgba(63,185,80,.38);
+    box-shadow: 0 0 0 1px rgba(63,185,80,.08), 0 10px 26px rgba(0,0,0,.28);
+  }
+  /* 正在编辑的链 */
+  .chain.editing { border-style: dashed; border-color: rgba(210,153,34,.5); }
+
+  .chain-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .chain-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .chain-name { font-size: 15px; font-weight: 700; letter-spacing: .2px; }
+  .chain-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  /* 模式徽标 / 间隔徽标 */
+  .mode-badge, .ivl-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
+    color: var(--text-dim);
+  }
+  .mode-badge.once  { color: #b9a8ff; border-color: rgba(124,92,255,.4);  background: rgba(124,92,255,.14); }
+  .mode-badge.while { color: #8fc7ff; border-color: rgba(79,156,249,.42); background: rgba(79,156,249,.14); }
+
+  .chain-meta {
+    margin-top: 9px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    word-break: break-all;
+  }
+  .chain-err {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #ffb3ae;
+    word-break: break-all;
+  }
+
+  /* ---------- 链带：节点 + 连接线 + 起止端子 ---------- */
+
+  /* 容器：窄屏横向滚动，不撑破面板 */
+  .chain-strip-wrap {
+    margin-top: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 8px;
+    scrollbar-width: thin;
+  }
+  .chain-strip {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* 技能节点方块 */
+  .chain-node {
+    flex: 0 0 auto;
+    min-width: 118px;
+    max-width: 210px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    display: flex; flex-direction: column; gap: 3px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .chain-node .node-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .chain-node .node-name {
+    font-size: 13.5px; font-weight: 600; color: #dbe6f3;
+    line-height: 1.3; word-break: break-all;
+  }
+  .chain-node .node-ver { font-size: 11px; color: var(--text-dim); }
+
+  /* 序号圆标（链视图与编辑器共用） */
+  .node-idx {
+    flex: 0 0 auto;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-dim);
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+  }
+
+  /* 当前正在执行的节点：呼吸发光 */
+  .chain-node.active {
+    border-color: rgba(63,185,80,.75);
+    animation: nodeBreath 1.6s ease-in-out infinite;
+  }
+  .chain-node.active .node-idx {
+    color: #0b0e14; background: var(--ok); border-color: transparent; font-weight: 700;
+  }
+  @keyframes nodeBreath {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(63,185,80,.3),  0 0 10px rgba(63,185,80,.22); transform: translateY(0); }
+    50%      { box-shadow: 0 0 0 2px rgba(63,185,80,.55), 0 0 24px rgba(63,185,80,.5);  transform: translateY(-2px); }
+  }
+
+  /* 空链占位节点 */
+  .chain-node.placeholder {
+    min-width: 220px;
+    padding: 16px 14px;
+    border-style: dashed;
+    border-color: rgba(139,148,158,.42);
+    background: rgba(255,255,255,.014);
+    color: var(--text-dim);
+    font-size: 12.5px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* 连接线 + 箭头（纯 CSS 伪元素，无任何外部依赖） */
+  .chain-link {
+    position: relative;
+    flex: 0 0 auto;
+    width: 46px; height: 2px;
+    margin: 0 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--border), rgba(79,156,249,.5));
+  }
+  .chain-link::after {
+    content: "";
+    position: absolute;
+    right: -1px; top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 7px solid rgba(79,156,249,.7);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+  /* 运行中：连接线流动动画（marching gradient，性能友好） */
+  .chain.running .chain-link {
+    background-image: repeating-linear-gradient(90deg,
+      rgba(79,156,249,.2) 0 6px, rgba(79,156,249,.9) 6px 12px);
+    background-size: 12px 100%;
+    animation: linkFlow .9s linear infinite;
+  }
+  @keyframes linkFlow {
+    from { background-position: 0 0; }
+    to   { background-position: 12px 0; }
+  }
+
+  /* 起点端子（圆点 + 脉冲）/ 终点端子（方块 + 箭头） */
+  .chain-term {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px;
+    letter-spacing: .5px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .chain-term .term-cap {
+    position: relative;
+    display: grid; place-items: center;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+  }
+  .chain-term.start .term-cap {
+    border: 2px solid rgba(63,185,80,.75);
+    background: rgba(63,185,80,.16);
+  }
+  .chain-term.start .term-cap::after {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ok);
+  }
+  .chain.running .chain-term.start .term-cap {
+    animation: termPulse 1.6s ease-out infinite;
+  }
+  @keyframes termPulse {
+    0%   { box-shadow: 0 0 0 0   rgba(63,185,80,.55); }
+    100% { box-shadow: 0 0 0 9px rgba(63,185,80,0);   }
+  }
+  .chain-term.end .term-cap {
+    border-radius: 7px;
+    border: 2px solid rgba(79,156,249,.6);
+    background: rgba(79,156,249,.14);
+  }
+  .chain-term.end .term-cap::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    margin-left: 1px;
+    width: 0; height: 0;
+    border-left: 7px solid var(--accent);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+
+  .run-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: rgba(255,255,255,.03);
+  }
+  .run-badge.running {
+    color: #7ee787;
+    border-color: rgba(63,185,80,.4);
+    background: rgba(63,185,80,.12);
+  }
+  .run-badge.stopped {
+    color: var(--text-dim);
+    border-color: var(--border);
+    background: rgba(255,255,255,.03);
+  }
+  .run-badge.starting {
+    color: #e3b341;
+    border-color: rgba(210,153,34,.45);
+    background: rgba(210,153,34,.12);
+  }
+
+  /* ---------- 链编辑器：可视化编排（拖拽排序） ---------- */
+  .editor {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px 16px;
+    background: rgba(255,255,255,.01);
+    transition: border-color .25s, background .25s;
+  }
+  /* 处于「编辑中」态 */
+  .editor.active {
+    border-color: rgba(210,153,34,.5);
+    background: rgba(210,153,34,.04);
+  }
+  .editor-title {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #cbd6e4;
+  }
+  .editor-hint { font-size: 11.5px; font-weight: 400; color: var(--text-dim); }
+
+  /* 编辑画布：横向可滚动 */
+  .editor-canvas {
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,.014);
+  }
+  .editor-strip-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 12px;
+    scrollbar-width: thin;
+  }
+  .editor-strip {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    min-width: 100%;
+    min-height: 74px;
+  }
+
+  /* 可拖拽节点 */
+  .edit-node {
+    position: relative;
+    flex: 0 0 auto;
+    min-width: 132px;
+    max-width: 210px;
+    padding: 10px 12px;
+    border: 1px dashed rgba(79,156,249,.45);
+    border-radius: 10px;
+    background: rgba(79,156,249,.07);
+    display: flex; flex-direction: column; gap: 3px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: opacity .15s, transform .15s, border-color .15s, background .15s;
+  }
+  .edit-node:hover { border-color: rgba(79,156,249,.85); background: rgba(79,156,249,.13); }
+  .edit-node.dragging {
+    opacity: .35;
+    transform: scale(.96);
+    cursor: grabbing;
+    border-style: solid;
+  }
+  .edit-node .node-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .edit-node .edit-node-name {
+    font-size: 13px; font-weight: 600; color: #dbe6f3;
+    line-height: 1.3; word-break: break-all;
+  }
+  .edit-node .edit-node-ver { font-size: 11px; color: var(--text-dim); }
+  .edit-node .edit-node-tools { display: flex; gap: 4px; margin-top: 8px; }
+  .edit-node .edit-node-tools .btn { padding: 2px 8px; font-size: 11.5px; border-radius: 6px; }
+  /* 编辑区里正在执行的节点同样呼吸发光 */
+  .edit-node.active {
+    border-style: solid;
+    border-color: rgba(63,185,80,.8);
+    animation: nodeBreath 1.6s ease-in-out infinite;
+  }
+  .edit-node.active .node-idx {
+    color: #0b0e14; background: var(--ok); border-color: transparent; font-weight: 700;
+  }
+
+  /* 拖拽插入位置实时高亮 */
+  .edit-node.drop-before::before,
+  .edit-node.drop-after::after {
+    content: "";
+    position: absolute;
+    top: -5px; bottom: -5px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(79,156,249,.9);
+  }
+  .edit-node.drop-before::before { left: -8px; }
+  .edit-node.drop-after::after   { right: -8px; }
+
+  /* 链尾追加落点（空链时作为占位提示） */
+  .edit-drop-tail {
+    flex: 0 0 auto;
+    display: grid; place-items: center;
+    min-width: 108px;
+    padding: 16px 12px;
+    margin: 0 6px;
+    border: 1px dashed rgba(139,148,158,.45);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 11.5px;
+    text-align: center;
+    background: rgba(255,255,255,.012);
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .edit-drop-tail.armed {
+    border-color: var(--accent);
+    color: #cfe2ff;
+    background: rgba(79,156,249,.12);
+  }
+
+  /* ---------- 空状态 ---------- */
+  .empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 28px 12px;
+    font-size: 13px;
+  }
+  .empty svg { opacity: .4; margin-bottom: 8px; }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed;
+    right: 24px; bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 999;
+  }
+  .toast {
+    min-width: 220px;
+    max-width: 380px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    display: flex; align-items: center; gap: 10px;
+    transform: translateX(120%);
+    animation: toastIn .35s ease forwards;
+    word-break: break-all;
+  }
+  .toast.out { animation: toastOut .3s ease forwards; }
+  .toast .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .toast.ok  .dot { background: var(--ok); }
+  .toast.err .dot { background: var(--err); }
+
+  @keyframes toastIn  { to { transform: none; } }
+  @keyframes toastOut { to { transform: translateX(120%); opacity: 0; } }
+
+  /* ---------- 数字滚动 ---------- */
+  .counter { display: inline-block; }
+  .counter.tick {
+    animation: tick .35s ease;
+  }
+  @keyframes tick {
+    0%   { transform: scale(1);    color: inherit; }
+    40%  { transform: scale(1.25); color: var(--accent); }
+    100% { transform: scale(1);    color: inherit; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <div class="logo">S</div>
+    <div>
+      <h1>Skill Control · 控制台</h1>
+      <div class="subtitle">实时内存监控 · 技能管理 · 技能链调度</div>
+    </div>
+  </div>
+  <div class="status-pill" id="statusPill">
+    <span class="dot"></span>
+    <span id="statusText">连接中…</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 内存实时监控 ============ -->
+  <section class="panel span-2">
+    <div class="panel-head">
+      <div class="panel-title">
+        <span class="icon">M</span>
+        <span>内存实时监控</span>
+      </div>
+      <span style="font-size:12px;color:var(--text-dim)">
+        共 <span id="memCount" class="counter">0</span> 项 · <span id="memHint">每 500ms 刷新</span>
+      </span>
+    </div>
+    <div class="panel-body">
+      <div class="tbl-wrap">
+        <table id="memTable">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>类型</th>
+              <th style="text-align:right">大小 (字节)</th>
+              <th>值</th>
+            </tr>
+          </thead>
+          <tbody id="memBody"></tbody>
+        </table>
+        <div class="empty" id="memEmpty" style="display:none">
+          暂无内存数据
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 技能列表 ============ -->
+  <section class="panel span-2">
+    <div class="panel-head">
+      <div class="panel-title">
+        <span class="icon" style="background:rgba(124,92,255,.15);color:#b9a8ff">K</span>
+        <span>技能列表</span>
+      </div>
+      <div class="head-actions">
+        <span style="font-size:12px;color:var(--text-dim)">
+          共 <span id="skillCount" class="counter">0</span> 个
+        </span>
+        <button class="btn primary" id="btnUpdate">
+          <span class="spinner"></span>
+          <span class="label">更新技能</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="tbl-wrap">
+        <table id="skillTable">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>版本</th>
+              <th>描述</th>
+              <th>URL</th>
+            </tr>
+          </thead>
+          <tbody id="skillBody"></tbody>
+        </table>
+        <div class="empty" id="skillEmpty" style="display:none">
+          暂无技能
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 技能链管理 ============ -->
+  <section class="panel span-2">
+    <div class="panel-head">
+      <div class="panel-title">
+        <span class="icon" style="background:rgba(63,185,80,.15);color:#7ee787">C</span>
+        <span>技能链管理</span>
+      </div>
+      <div class="head-actions">
+        <span id="runSummary" style="font-size:12px;color:var(--text-dim)">运行中 0 / 共 0 条链</span>
+        <button class="btn sm" id="btnStartAll">
+          <span class="spinner"></span>
+          <span class="label">全部启动</span>
+        </button>
+        <button class="btn sm danger" id="btnStopAll">
+          <span class="spinner"></span>
+          <span class="label">全部停止</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div id="chainList"></div>
+      <div class="empty" id="chainEmpty" style="display:none">
+        暂无技能链
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 新建 / 编辑链：可视化编排（拖拽节点排序，连接线实时更新） -->
+      <div class="editor" id="editorBox">
+        <div class="editor-title">
+          <span id="editorTitle">新建技能链</span>
+          <span class="editor-hint">拖动节点可调整执行顺序 · 节点之间的箭头表示执行先后</span>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="chainName">链名称</label>
+            <input type="text" id="chainName" placeholder="例如 test">
+          </div>
+          <div class="field">
+            <label for="chainMode">模式</label>
+            <select id="chainMode">
+              <option value="once">once · 只跑一次</option>
+              <option value="while">while · 一直循环</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="chainInterval">轮间隔（毫秒，0 = 不等待，仅 while 生效）</label>
+            <input type="number" id="chainInterval" min="0" step="any" value="1000">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label for="skillSelect">添加技能（追加到链尾）</label>
+          <div class="inline">
+            <select id="skillSelect"></select>
+            <button class="btn sm" id="btnAddSkill">添加</button>
+          </div>
+        </div>
+
+        <!-- 编排画布：起点端子 → 可拖拽节点（带箭头连接线）→ 追加落点 → 终点端子 -->
+        <div class="editor-canvas">
+          <div class="editor-strip-wrap">
+            <div class="editor-strip" id="editorSkills"></div>
+          </div>
+        </div>
+        <div class="empty" id="editorEmpty" style="display:none">
+          链为空：请从上方选择技能后点击「添加」，或把已有节点拖到虚线区域
+        </div>
+
+        <div class="row-actions">
+          <button class="btn primary" id="btnSaveChain">
+            <span class="spinner"></span>
+            <span class="label">保存技能链</span>
+          </button>
+          <button class="btn" id="btnCancelChain">取消编辑</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 内存写入 / 操作 ============ -->
+  <section class="panel span-2">
+    <div class="panel-head">
+      <div class="panel-title">
+        <span class="icon" style="background:rgba(210,153,34,.15);color:#e3b341">W</span>
+        <span>内存写入 / 操作</span>
+      </div>
+      <span style="font-size:12px;color:var(--text-dim)">写入值需为合法 JSON</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="setKey">键名</label>
+          <input type="text" id="setKey" placeholder="例如 skill.timeout">
+        </div>
+        <div class="field" style="grid-column:1 / -1">
+          <label for="setValue">值（JSON：123 / "abc" / true / [1,2,3] / ["a","b"]）</label>
+          <textarea id="setValue" placeholder="123"></textarea>
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn primary" id="btnSet">
+          <span class="spinner"></span>
+          <span class="label">写入</span>
+        </button>
+        <button class="btn sm" id="btnSetString">
+          <span class="spinner"></span>
+          <span class="label">写入字符串</span>
+        </button>
+        <button class="btn sm" id="btnSetNumber">
+          <span class="spinner"></span>
+          <span class="label">写入数字</span>
+        </button>
+        <button class="btn sm" id="btnSetBool">
+          <span class="spinner"></span>
+          <span class="label">写入布尔</span>
+        </button>
+        <button class="btn sm" id="btnSetArray">
+          <span class="spinner"></span>
+          <span class="label">写入数组</span>
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="delName">按键名删除（多个用英文逗号分隔）</label>
+          <div class="inline">
+            <input type="text" id="delName" placeholder="k1, k2">
+            <button class="btn sm danger" id="btnDelName">
+              <span class="spinner"></span>
+              <span class="label">删除</span>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="delPrefix">按前缀删除</label>
+          <div class="inline">
+            <input type="text" id="delPrefix" placeholder="skill.">
+            <button class="btn sm danger" id="btnDelPrefix">
+              <span class="spinner"></span>
+              <span class="label">删除</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-text" id="setResult"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// 配置：接口路径 + 轮询间隔
+// 注意：后端不支持 URL 查询串，所有参数一律走 POST body
+// ============================================================
+const API_MEM_LIST      = "/api/GetMemory";          // 内存条目（无值）
+const API_MEM_VALUES    = "/api/GetMemoryValues";    // 内存条目（带 value）
+const API_MEM_SET       = "/api/SetMemory";          // 写内存
+const API_MEM_DEL       = "/api/DelMemory";          // 删内存
+const API_SKILLS        = "/api/GetSkills";          // 技能列表
+const API_SKILLS_UPDATE = "/api/UpdateSkills";       // 更新技能
+const API_CHAIN_GET     = "/api/GetSkillChain";      // 读取技能链
+const API_CHAIN_UPDATE  = "/api/UpdateSkillChain";   // 整体保存技能链
+const API_CHAIN_START   = "/api/StartSkillChain";    // 启动技能链
+const API_CHAIN_STOP    = "/api/StopSkillChain";     // 停止技能链
+const API_RUN_STATUS    = "/api/GetRunStatus";       // 运行状态
+
+const MEM_INTERVAL   = 500;    // 内存轮询
+const RUN_INTERVAL   = 1000;   // 运行状态轮询
+const CHAIN_INTERVAL = 3000;   // 技能链列表轮询
+
+// 链模式中文名
+const MODE_LABEL = { once: "只跑一次", while: "一直循环" };
+
+// ============================================================
+// 元素引用
+// ============================================================
+const statusPill  = document.getElementById("statusPill");
+const statusText  = document.getElementById("statusText");
+
+const memBody     = document.getElementById("memBody");
+const memEmpty    = document.getElementById("memEmpty");
+const memCount    = document.getElementById("memCount");
+const memHint     = document.getElementById("memHint");
+
+const skillBody   = document.getElementById("skillBody");
+const skillEmpty  = document.getElementById("skillEmpty");
+const skillCount  = document.getElementById("skillCount");
+const btnUpdate   = document.getElementById("btnUpdate");
+
+const runSummary  = document.getElementById("runSummary");
+const chainList   = document.getElementById("chainList");
+const chainEmpty  = document.getElementById("chainEmpty");
+const btnStartAll = document.getElementById("btnStartAll");
+const btnStopAll  = document.getElementById("btnStopAll");
+
+const editorBox     = document.getElementById("editorBox");
+const editorTitle   = document.getElementById("editorTitle");
+const chainNameEl   = document.getElementById("chainName");
+const chainModeEl   = document.getElementById("chainMode");
+const chainIntervalEl = document.getElementById("chainInterval");
+const skillSelect   = document.getElementById("skillSelect");
+const btnAddSkill   = document.getElementById("btnAddSkill");
+const editorSkills  = document.getElementById("editorSkills");
+const editorEmpty   = document.getElementById("editorEmpty");
+const btnSaveChain  = document.getElementById("btnSaveChain");
+const btnCancelChain= document.getElementById("btnCancelChain");
+
+const setKeyEl    = document.getElementById("setKey");
+const setValueEl  = document.getElementById("setValue");
+const btnSet      = document.getElementById("btnSet");
+const btnSetString= document.getElementById("btnSetString");
+const btnSetNumber= document.getElementById("btnSetNumber");
+const btnSetBool  = document.getElementById("btnSetBool");
+const btnSetArray = document.getElementById("btnSetArray");
+const delNameEl   = document.getElementById("delName");
+const btnDelName  = document.getElementById("btnDelName");
+const delPrefixEl = document.getElementById("delPrefix");
+const btnDelPrefix= document.getElementById("btnDelPrefix");
+const setResultEl = document.getElementById("setResult");
+
+// ============================================================
+// 工具函数
+// ============================================================
+
+// 安全 HTML 转义（内存 key、技能名、错误信息都可能带 <>&"）
+function esc(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+// 顶部状态灯
+function setStatus(text, kind) {
+  statusText.textContent = text;
+  statusPill.className = "status-pill" + (kind ? " " + kind : "");
+}
+
+// Toast 提示（用 textContent 写入，避免任何注入）
+function toast(msg, kind = "ok") {
+  const box = document.getElementById("toast");
+  if (!box) return;
+  const el = document.createElement("div");
+  el.className = "toast " + kind;
+  const dot = document.createElement("span");
+  dot.className = "dot";
+  const txt = document.createElement("span");
+  txt.textContent = String(msg);
+  el.append(dot, txt);
+  box.appendChild(el);
+  setTimeout(() => {
+    el.classList.add("out");
+    setTimeout(() => el.remove(), 320);
+  }, 2600);
+}
+
+// 数字变化动画
+function setCount(el, value) {
+  if (el.textContent === String(value)) return;
+  el.textContent = value;
+  el.classList.remove("tick");
+  void el.offsetWidth;   // 触发 reflow，重启动画
+  el.classList.add("tick");
+}
+
+// 截断长文本
+function truncate(s, n) {
+  const str = String(s);
+  return str.length > n ? str.slice(0, n) + "…" : str;
+}
+
+// 任意值 → 可读字符串
+function valueToText(v) {
+  if (v === undefined) return "-";
+  if (v === null) return "null";
+  const t = typeof v;
+  if (t === "string") return v;
+  if (t === "number" || t === "boolean") return String(v);
+  try {
+    return JSON.stringify(v);
+  } catch (e) {
+    return String(v);
+  }
+}
+
+// 字符串 → 字符串（去掉外层 JSON 引号）
+function toStrValue(raw) {
+  const t = String(raw).trim();
+  if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
+    try {
+      const p = JSON.parse(t);
+      if (typeof p === "string") return p;
+    } catch (e) { /* 保持原样 */ }
+  }
+  return t;
+}
+
+// 字符串 → 数字
+function toNumValue(raw) {
+  const t = String(raw).trim();
+  if (t === "") throw new Error("值不能为空");
+  try {
+    const p = JSON.parse(t);
+    if (typeof p === "number" && Number.isFinite(p)) return p;
+  } catch (e) { /* 继续按普通数字解析 */ }
+  const n = Number(t);
+  if (!Number.isFinite(n)) throw new Error("不是合法数字：" + t);
+  return n;
+}
+
+// 字符串 → 布尔
+function toBoolValue(raw) {
+  const t = String(raw).trim().toLowerCase();
+  if (["true", "1", "yes", "on", "是"].includes(t)) return true;
+  if (["false", "0", "no", "off", "否"].includes(t)) return false;
+  throw new Error("布尔值请输入 true / false");
+}
+
+// 字符串 → 数组（优先 JSON，否则按逗号切分并逐项尝试 JSON）
+function toArrValue(raw) {
+  const t = String(raw).trim();
+  if (t === "") throw new Error("数组不能为空");
+  try {
+    const p = JSON.parse(t);
+    if (Array.isArray(p)) return p;
+  } catch (e) { /* 继续按逗号切分 */ }
+  return t.split(",")
+    .map(s => s.trim())
+    .filter(s => s !== "")
+    .map(s => {
+      try {
+        const p = JSON.parse(s);
+        return (typeof p === "object" && p !== null) ? s : p;
+      } catch (e) {
+        return s;
+      }
+    });
+}
+
+// 统一 GET（JSON）
+// 取响应体（不管 HTTP 状态码），失败返回 null
+async function readBody(res) {
+  try { return await res.json(); } catch (e) { return null; }
+}
+
+// 统一请求。注意：非 2xx 时也要把服务端 JSON 里的 message 带出来，
+// 否则界面只能显示 "HTTP 400" 这种没有信息量的提示
+//
+// ★ 必须带超时：后端一旦卡住（例如线程死锁），没有超时的 fetch 会一直挂着，
+//   withLoading 的 finally 永远等不到 → 按钮的 loading 状态解不掉 → 整个页面
+//   看起来"死了"，点什么都没反应。宁可明确报「请求超时」。
+const API_TIMEOUT_MS = 8000;
+
+async function apiFetch(path, options) {
+  const ctl   = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), API_TIMEOUT_MS);
+  try {
+    const res  = await fetch(path, Object.assign({ cache: "no-store", signal: ctl.signal }, options || {}));
+    const data = await readBody(res);
+    if (!res.ok) {
+      const err = new Error((data && data.message) || ("HTTP " + res.status));
+      err.status = res.status;
+      err.data   = data;   // 400 也可能带着 started / failed / stopped，调用方要用
+      throw err;
+    }
+    return data;
+  } catch (e) {
+    if (e && e.name === "AbortError") {
+      const err = new Error("请求超时 " + API_TIMEOUT_MS + "ms：后端没有响应（详见 logs/ 里的日志）");
+      err.timeout = true;
+      throw err;
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function apiGet(path) {
+  return apiFetch(path, { method: "GET" });
+}
+
+// 统一 POST JSON（同样保留服务端的 message / data）
+async function apiPost(path, body) {
+  return apiFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+}
+
+// 响应里 status === "error" 时抛错
+function assertOk(data, fallbackMsg) {
+  if (data && data.status === "error") {
+    throw new Error(data.message || fallbackMsg || "操作失败");
+  }
+  return data;
+}
+
+// 按钮 loading 包装：统一 try/catch + toast，防重复提交
+async function withLoading(btn, fn) {
+  if (!btn) return;
+  if (btn.classList.contains("loading")) return;
+  btn.classList.add("loading");
+  try {
+    await fn();
+  } catch (e) {
+    toast(String((e && e.message) || e), "err");
+  } finally {
+    btn.classList.remove("loading");
+  }
+}
+
+// ============================================================
+// 面板一：内存实时监控
+// ============================================================
+let memRowSig  = "";     // 名称|类型|大小 列表签名，变了才重建行
+let memValEls  = [];     // 与行同序的值单元格，用于原地更新
+let memDegraded = false; // 是否降级为 GetMemory
+
+// 是否可发起请求（页面隐藏时跳过轮询）
+function canPoll() {
+  return !document.hidden;
+}
+
+function setValCell(el, v) {
+  if (!el) return;
+  const full = (v === undefined) ? "-" : valueToText(v);
+  el.textContent = truncate(full, 120);
+  el.title = full;              // hover 显示完整内容
+}
+
+function renderMemory(list, degraded) {
+  if (!Array.isArray(list)) return;
+
+  setCount(memCount, list.length);
+
+  const rowSig = list
+    .map(x => `${(x && x.name)}|${(x && x.type)}|${(x && x.size)}`)
+    .join(";") + (degraded ? "|D" : "");
+
+  if (rowSig === memRowSig) {
+    // 结构未变，仅原地刷新「值」列，避免每 500ms 重建整表
+    for (let i = 0; i < list.length; i++) {
+      setValCell(memValEls[i], list[i] ? list[i].value : undefined);
+    }
+    return;
+  }
+  memRowSig = rowSig;
+  memValEls = [];
+
+  if (list.length === 0) {
+    memBody.replaceChildren();
+    memEmpty.style.display = "";
+    return;
+  }
+  memEmpty.style.display = "none";
+
+  const frag = document.createDocumentFragment();
+  for (const raw of list) {
+    const item = raw || {};
+    const tr = document.createElement("tr");
+    tr.classList.add("row-enter");
+
+    const tdName = document.createElement("td");
+    tdName.className = "name";
+    tdName.textContent = item.name ?? "-";
+
+    const tdType = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = item.type ?? "-";
+    tdType.appendChild(badge);
+
+    const tdSize = document.createElement("td");
+    tdSize.className = "num";
+    tdSize.textContent = item.size ?? "-";
+
+    const tdVal = document.createElement("td");
+    tdVal.className = "val-cell";
+    const valEl = document.createElement("div");
+    valEl.className = "val";
+    setValCell(valEl, item.value);
+    tdVal.appendChild(valEl);
+    memValEls.push(valEl);
+
+    tr.append(tdName, tdType, tdSize, tdVal);
+    frag.appendChild(tr);
+  }
+  memBody.replaceChildren(frag);
+}
+
+// 轮询内存：优先 GetMemoryValues，失败降级 GetMemory
+async function pollMemory() {
+  if (!canPoll()) return;
+
+  let list = null;
+  let degraded = false;
+
+  try {
+    const data = await apiGet(API_MEM_VALUES);
+    if (!Array.isArray(data)) throw new Error("返回格式异常");
+    list = data;
+  } catch (e) {
+    degraded = true;
+    try {
+      const data2 = await apiGet(API_MEM_LIST);
+      if (!Array.isArray(data2)) throw new Error("返回格式异常");
+      list = data2;
+    } catch (e2) {
+      setStatus("连接失败：" + e2.message, "err");
+      return;
+    }
+  }
+
+  if (degraded !== memDegraded) {
+    memDegraded = degraded;
+    memHint.textContent = degraded
+      ? "值接口不可用 · 已降级为 GetMemory"
+      : "每 500ms 刷新";
+  }
+
+  renderMemory(list, degraded);
+  setStatus("已连接 · 更新于 " + new Date().toLocaleTimeString(), "ok");
+}
+
+// ============================================================
+// 面板二：技能列表
+// ============================================================
+let skillsCache = [];    // 技能缓存（链编辑器下拉框用）
+let lastSkillSig = "";
+
+function renderSkills(list) {
+  if (!Array.isArray(list)) return;
+
+  setCount(skillCount, list.length);
+
+  const sig = list.map(s => `${(s && s.name)}|${(s && s.version)}`).join(";");
+  if (sig === lastSkillSig) return;
+  lastSkillSig = sig;
+
+  if (list.length === 0) {
+    skillBody.replaceChildren();
+    skillEmpty.style.display = "";
+    return;
+  }
+  skillEmpty.style.display = "none";
+
+  const frag = document.createDocumentFragment();
+  for (const raw of list) {
+    const item = raw || {};
+    const tr = document.createElement("tr");
+    tr.classList.add("row-enter");
+
+    const desc = item.description ?? "-";
+    const url  = item.url ?? "-";
+    tr.innerHTML = `
+      <td class="name">${esc(item.name ?? "-")}</td>
+      <td><span class="badge">${esc(item.version ?? "-")}</span></td>
+      <td><div class="desc" title="${esc(desc)}">${esc(truncate(desc, 60))}</div></td>
+      <td><div class="desc" title="${esc(url)}">${esc(truncate(url, 60))}</div></td>
+    `;
+    frag.appendChild(tr);
+  }
+  skillBody.replaceChildren(frag);
+}
+
+async function loadSkills() {
+  try {
+    const data = await apiGet(API_SKILLS);
+    if (!Array.isArray(data)) throw new Error("返回格式异常");
+    skillsCache = data.filter(s => s && typeof s === "object");
+    renderSkills(skillsCache);
+    renderSkillOptions();
+  } catch (e) {
+    toast("加载技能失败：" + e.message, "err");
+  }
+}
+
+// 「更新技能」按钮：成功后重新拉技能列表
+// 有技能链在跑时后端会拒绝（400）：这里把服务端的真实原因显示出来，
+// 并直接给出「全部停止后重试」的一步操作，不用让用户自己去找停止按钮
+btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
+  try {
+    const data = assertOk(await apiGet(API_SKILLS_UPDATE), "更新技能失败");
+
+    await loadSkills();
+    await loadChains(false);
+
+    const n = (data && data.skills_size != null) ? data.skills_size : skillsCache.length;
+    toast("技能已更新，共 " + n + " 个", "ok");
+  } catch (e) {
+    // 正在运行导致被拒：服务端 err.data.running 是运行中的链数量
+    const running = (e && e.data && e.data.running) ? Number(e.data.running) : 0;
+
+    if (running > 0) {
+      const ok = confirm(
+        "有 " + running + " 条技能链正在运行，重新扫描技能需要先停止它们。\n\n" +
+        "是否「全部停止」后立即重新扫描？"
+      );
+      if (!ok) {
+        toast(e.message || "已取消更新技能", "err");
+        return;
+      }
+
+      await apiPost(API_CHAIN_STOP, { all: true });   // 先全部停止
+      await pollRunStatus();
+
+      const data = assertOk(await apiGet(API_SKILLS_UPDATE), "更新技能失败");
+      await loadSkills();
+      await loadChains(false);
+
+      const n = (data && data.skills_size != null) ? data.skills_size : skillsCache.length;
+      toast("已停止全部技能链并重新扫描，共 " + n + " 个技能", "ok");
+      return;
+    }
+
+    // 其它失败：直接把服务端 message 抛给 withLoading 去 toast
+    throw e;
+  }
+}));
+
+// ============================================================
+// 面板三：技能链管理（链式图形 UI：链带 + 节点 + 连接线 + 端子）
+// ============================================================
+let chains = [];               // 全部链（完整数组，整体提交用）
+let runStatus = {};            // name -> 运行状态对象
+let lastChainSig = "";         // 链配置签名，变了才重建链带
+let editingSkills = [];        // 编辑区里的技能对象数组
+let editingOrigin = null;      // 正在编辑的原链名，null = 新建
+let isEditing = false;         // 编辑态标记：链视图与编辑器用「编辑中 / 浏览」区分
+
+// 拖拽状态（模块级变量，渲染时不会丢失）
+const dragState = { active: false, from: -1, over: -1, place: "" };  // place: before | after | end
+
+// 规范化 skill 对象（提交时保留后端需要的字段）
+function normalizeSkill(s) {
+  const o = s || {};
+  const out = {
+    name: o.name ?? "",
+    description: o.description ?? "",
+    version: o.version ?? "",
+    url: o.url ?? ""
+  };
+  if (Array.isArray(o.author)) out.author = o.author.map(a => String(a));
+  else if (o.author !== undefined && o.author !== null) out.author = o.author;
+  return out;
+}
+
+// 把服务端返回的链规范化
+function normalizeChain(c) {
+  const o = c || {};
+  return {
+    name: o.name ?? "",
+    mode: o.mode ?? "once",
+    interval: Number(o.interval) || 0,
+    list: Array.isArray(o.list) ? o.list.map(normalizeSkill) : []
+  };
+}
+
+// 提交时优先使用 /api/GetSkills 返回的完整技能对象（按名字取），取不到才退回链里的对象
+function pickFullSkill(skill) {
+  const nm = String((skill && skill.name) || "");
+  const found = skillsCache.find(s => String(s.name) === nm);
+  return normalizeSkill(found || skill);
+}
+
+async function loadChains(notify) {
+  try {
+    const data = assertOk(await apiGet(API_CHAIN_GET), "读取技能链失败");
+    const lists = (data && Array.isArray(data.skills_lists)) ? data.skills_lists : [];
+    chains = lists.map(normalizeChain);
+    renderChains();
+  } catch (e) {
+    if (notify) toast("加载技能链失败：" + e.message, "err");
+  }
+}
+
+// ---------- 链带（chain band）：起点端子 → 节点 →（箭头）→ 终点端子 ----------
+
+// 端子是静态结构，动态文本全部走 esc()
+const TERM_START = '<span class="chain-term start"><span class="term-cap"></span><span>起点</span></span>';
+const TERM_END   = '<span class="chain-term end"><span class="term-cap"></span><span>终点</span></span>';
+
+// 链带上的操作按钮（spinner + label 结构与原有一致，配合 withLoading 防重复提交）
+function bandBtn(label, cls, act, name) {
+  return '<button class="btn sm' + (cls ? " " + cls : "") + '"' +
+    ' data-act="' + esc(act) + '" data-name="' + esc(name) + '">' +
+    '<span class="spinner"></span><span class="label">' + esc(label) + "</span></button>";
+}
+
+// 生成一条链带的 HTML：技能名 / 链名 / 版本 / 错误信息一律 esc 转义
+function chainBandHtml(c, i) {
+  const mode = (c.mode === "while") ? "while" : "once";
+  const ivl  = Number(c.interval) || 0;
+
+  // 节点串：空链给虚线占位节点
+  let stripHtml;
+  if (!c.list || c.list.length === 0) {
+    stripHtml = TERM_START +
+      '<div class="chain-node placeholder">空链 · 请编辑添加技能</div>' +
+      TERM_END;
+  } else {
+    const nodes = c.list.map((s, k) => {
+      const nm  = s.name || "(未命名技能)";
+      const ver = s.version ? ("v" + s.version) : "—";
+      const tip = nm + (s.description ? " · " + s.description : "");
+      return (k > 0 ? '<span class="chain-link" title="执行顺序"></span>' : "") +
+        '<div class="chain-node" data-skill="' + esc(s.name || "") + '"' +
+          ' title="' + esc(tip) + '">' +
+          '<div class="node-top">' +
+            '<span class="node-idx">' + (k + 1) + "</span>" +
+            '<span class="node-name">' + esc(nm) + "</span>" +
+          "</div>" +
+          '<span class="node-ver">' + esc(ver) + "</span>" +
+        "</div>";
+    }).join("");
+    stripHtml = TERM_START + nodes + TERM_END;
+  }
+
+  return "" +
+    '<div class="chain-head">' +
+      '<div class="chain-title">' +
+        '<span class="chain-name">' + esc(c.name || "(未命名)") + "</span>" +
+        '<span class="mode-badge ' + mode + '">' +
+          esc(mode + " · " + (MODE_LABEL[mode] || mode)) +
+        "</span>" +
+        '<span class="ivl-badge">' +
+          (ivl > 0 ? ("轮间隔 " + esc(ivl) + " ms") : "轮间隔 不等待（全速）") +
+        "</span>" +
+        '<span class="run-badge stopped" data-role="run">未知</span>' +
+      "</div>" +
+      '<div class="chain-actions">' +
+        bandBtn("启动", "", "start", c.name) +
+        bandBtn("停止", "danger", "stop", c.name) +
+        bandBtn("编辑", "", "edit", c.name) +
+        bandBtn("删除", "danger", "del", c.name) +
+      "</div>" +
+    "</div>" +
+    '<div class="chain-meta" data-role="meta"></div>' +
+    '<div class="chain-err" data-role="err" style="display:none"></div>' +
+    '<div class="chain-strip-wrap"><div class="chain-strip">' + stripHtml + "</div></div>";
+}
+
+// 渲染所有链带（结构不变时只刷新状态，不重建 DOM）
+function renderChains() {
+  // 拖拽过程中绝不重建 DOM，避免打断拖拽
+  if (dragState.active) return;
+
+  const sig = JSON.stringify(chains.map(c => [
+    c.name, c.mode, c.interval,
+    c.list.map(s => (s.name || "") + "@" + (s.version || ""))
+  ]));
+
+  if (sig === lastChainSig) {
+    updateChainStatus();
+    return;
+  }
+  lastChainSig = sig;
+
+  if (chains.length === 0) {
+    chainList.replaceChildren();
+    chainEmpty.style.display = "";
+    updateChainStatus();
+    return;
+  }
+  chainEmpty.style.display = "none";
+
+  const frag = document.createDocumentFragment();
+  chains.forEach((c, i) => {
+    const band = document.createElement("div");
+    band.className = "chain";
+    band.dataset.idx = String(i);
+    band.dataset.name = c.name;
+    band.innerHTML = chainBandHtml(c, i);
+    frag.appendChild(band);
+  });
+  chainList.replaceChildren(frag);
+  updateChainStatus();
+}
+
+// 宽松转数字：字段缺失 / 非数字 / null 一律当 0，避免界面出现 "undefined"
+function asNum(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+// 用 GetRunStatus 的结果刷新每条链带的状态徽标 / 元信息 / 节点高亮
+// （动态文本一律 textContent 写入，绝不拼接未转义 HTML）
+function updateChainStatus() {
+  let runningCount = 0;
+
+  chains.forEach((c, i) => {
+    const band = chainList.querySelector('.chain[data-idx="' + i + '"]');
+    if (!band) return;
+
+    const st         = runStatus[c.name] || null;
+    const isRunning  = !!(st && st.running);
+    const isStarting = !!(st && st.starting);
+    if (isRunning) runningCount++;
+
+    // 当前正在跑的技能名。
+    // ★ 两套实现表示"没有"的方式不一样：RunSkillsLists 给空串，旧的 Runskills 给
+    //   字符串 "null"，直接拼上去界面上就会出现「当前技能 null」，这里统一归一化。
+    const curRaw  = (st && st.current != null) ? String(st.current).trim() : "";
+    const current = (curRaw === "" || curRaw === "null" || curRaw === "undefined") ? "" : curRaw;
+
+    // 整条链运行中：描边发光 + 连接线流动动画
+    band.classList.toggle("running", isRunning);
+    // 正在编辑的链：虚线描边标记
+    band.classList.toggle("editing", isEditing && editingOrigin === c.name);
+
+    // 运行状态徽标
+    const statEl = band.querySelector('[data-role="run"]');
+    if (statEl) {
+      statEl.classList.remove("running", "stopped", "starting");
+      if (isRunning) {
+        statEl.classList.add("running");
+        statEl.textContent = "运行中";
+      } else if (isStarting) {
+        statEl.classList.add("starting");
+        statEl.textContent = "启动中";
+      } else {
+        statEl.classList.add("stopped");
+        statEl.textContent = "已停止";
+      }
+    }
+
+    // 技能数 / 已跑轮次 / 当前技能 / 启动与更新时间
+    const metaEl = band.querySelector('[data-role="meta"]');
+    if (metaEl) {
+      const total = (st && st.skill_count != null)
+        ? st.skill_count
+        : (c.list ? c.list.length : 0);
+      const parts = ["技能 " + total + " 个"];
+      if (st) {
+        parts.push("已跑轮次 " + asNum(st.loop));
+        parts.push("当前技能 " + (current || "-"));
+
+        // 节拍观测：这几项只有新实现（RunSkillsLists）才有真实值，旧的恒为 0，
+        // 所以「有值才显示」，免得本来就好用的界面上挂一串没意义的 0
+        const interval = asNum(st.interval);
+        const tickMs   = asNum(st.tick_ms);
+        const roundMs  = asNum(st.round_ms);
+        const inited   = asNum(st.inited);
+        const skipped  = asNum(st.skipped);
+
+        if (interval > 0) parts.push("节拍 " + interval + "ms");
+        if (tickMs   > 0) parts.push("实际间隔 " + tickMs + "ms");
+        if (roundMs  > 0) parts.push("本轮耗时 " + roundMs + "ms");
+        if (inited   > 0) parts.push("已 init " + inited + " 个");
+        if (skipped  > 0) parts.push("丢节拍 " + skipped + " 次");
+
+        if (st.start_time)  parts.push("启动 " + st.start_time);
+        if (st.update_time) parts.push("更新 " + st.update_time);
+      } else {
+        parts.push("状态未知");
+      }
+      metaEl.textContent = parts.join(" · ");
+    }
+
+    // 错误信息（有 error 时红色显示）
+    const errEl = band.querySelector('[data-role="err"]');
+    if (errEl) {
+      const err = (st && st.error) ? String(st.error) : "";
+      errEl.textContent = err ? ("错误：" + err) : "";
+      errEl.style.display = err ? "" : "none";
+    }
+
+    // 运行中的节点高亮：current 与该节点技能名一致时呼吸发光
+    const cur = (isRunning && current) ? current : "";
+    band.querySelectorAll(".chain-node").forEach(node => {
+      node.classList.toggle("active", cur !== "" && node.dataset.skill === cur);
+    });
+  });
+
+  runSummary.textContent = "运行中 " + runningCount + " / 共 " + chains.length + " 条链";
+
+  updateEditorHighlight();   // 编辑区同步高亮（不改动编辑区结构）
+}
+
+// 编辑区镜像高亮：正在编辑的链处于运行中时，同步高亮对应编辑节点
+function updateEditorHighlight() {
+  const st  = (isEditing && editingOrigin) ? runStatus[editingOrigin] : null;
+  const raw = (st && st.running && st.current != null) ? String(st.current).trim() : "";
+  // 同 updateChainStatus：把旧的 "null" 占位也当成"没有当前技能"
+  const cur = (raw === "" || raw === "null" || raw === "undefined") ? "" : raw;
+  editorSkills.querySelectorAll(".edit-node").forEach(node => {
+    node.classList.toggle("active", cur !== "" && node.dataset.skill === cur);
+  });
+}
+
+// 轮询运行状态（失败静默，避免 toast 刷屏）
+async function pollRunStatus() {
+  if (!canPoll()) return;
+  try {
+    const data = await apiGet(API_RUN_STATUS);
+    if (!data || !Array.isArray(data.lists)) return;
+    const map = {};
+    for (const item of data.lists) {
+      if (item && item.name) map[item.name] = item;
+    }
+    runStatus = map;
+    updateChainStatus();
+  } catch (e) {
+    /* 静默 */
+  }
+}
+
+// 把接口返回的 started / stopped / failed 拼成一句人话。
+// 接口的成功响应长这样：{status, started:[名...], failed:[{name,message}...], running:n}
+// 停止响应长这样：      {status, stopped:[名...], running:n}
+function chainResultText(data, okWord) {
+  const okList = []
+    .concat(Array.isArray(data && data.started) ? data.started : [])
+    .concat(Array.isArray(data && data.stopped) ? data.stopped : []);
+  const failed = Array.isArray(data && data.failed) ? data.failed : [];
+
+  const segs = [];
+  if (okList.length) {
+    segs.push(okWord + " " + okList.length + " 条（" + okList.join("、") + "）");
+  }
+  if (failed.length) {
+    segs.push("失败 " + failed.length + " 条：" + failed.map(f =>
+      String((f && f.name) || "?") + " " + String((f && f.message) || "")).join("；"));
+  }
+  if (segs.length === 0) segs.push((data && data.message) || "没有需要处理的链");
+  return segs.join("；");
+}
+
+// 启动 / 停止链的公共流程。
+// ★ 关键点：后端在「部分成功」时返回的是 **HTTP 400** 但响应体里带着
+//   started/failed —— 这种情况下 apiPost 会先抛异常，assertOk 根本没机会执行。
+//   所以必须从异常上取 e.data，否则界面上只会显示一句没信息量的 "HTTP 400"。
+async function runChainAction(path, payload, okWord, failWord) {
+  try {
+    const data = assertOk(await apiPost(path, payload), failWord);
+    toast(chainResultText(data, okWord), "ok");
+  } catch (e) {
+    const d = e && e.data;
+    const hasDetail = d && (Array.isArray(d.started) || Array.isArray(d.stopped) || Array.isArray(d.failed));
+
+    if (hasDetail) {
+      const anyFailed = Array.isArray(d.failed) && d.failed.length > 0;
+      toast(chainResultText(d, okWord), anyFailed ? "err" : "ok");
+    } else if (d && d.message) {
+      toast(String(d.message), "err");                 // 例如「该技能链没有运行记录: xxx」
+    } else {
+      toast(String((e && e.message) || e), "err");     // 超时 / 网络错误
+    }
+  }
+  // 不管成功失败都刷新一次状态：失败的链会在卡片上显示具体原因（statusJson 的 error 字段）
+  await pollRunStatus();
+}
+
+// 启动 / 停止单条链
+async function startChain(name) {
+  await runChainAction(API_CHAIN_START, { name: name }, "已启动", "启动失败");
+}
+async function stopChain(name) {
+  await runChainAction(API_CHAIN_STOP, { name: name }, "已停止", "停止失败");
+}
+
+// 整体提交：必须提交完整数组（含未修改的链）
+async function submitChains(nextArr, okMsg) {
+  const body = nextArr.map(c => ({
+    name: c.name,
+    mode: c.mode,
+    interval: c.interval,
+    list: (c.list || []).map(pickFullSkill)
+  }));
+
+  const data = assertOk(await apiPost(API_CHAIN_UPDATE, body), "保存技能链失败");
+  toast((data && data.message) ? data.message : (okMsg || "技能链已保存"), "ok");
+
+  lastChainSig = "";       // 强制重建
+  await loadChains(false);
+  await pollRunStatus();
+}
+
+// 删除链：本地剔除后整体提交（返回是否真的删除了）
+function deleteChain(name) {
+  if (!confirm("确定删除技能链「" + name + "」吗？")) return Promise.resolve(false);
+  return submitChains(chains.filter(c => c.name !== name), "已删除链 " + name).then(() => true);
+}
+
+// 链带上的按钮事件（事件委托）
+chainList.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const name = btn.dataset.name;
+  const act  = btn.dataset.act;
+
+  if (act === "start") {
+    withLoading(btn, () => startChain(name));
+  } else if (act === "stop") {
+    withLoading(btn, () => stopChain(name));
+  } else if (act === "edit") {
+    loadChainIntoEditor(name);
+  } else if (act === "del") {
+    withLoading(btn, async () => {
+      const done = await deleteChain(name);
+      // 删除的正好是正在编辑的链 → 退出编辑态
+      if (done && editingOrigin === name) resetEditor();
+    });
+  }
+});
+
+// 全部启动 / 全部停止（同样走 runChainAction：部分成功也要如实显示每一条链的结果）
+btnStartAll.addEventListener("click", () => withLoading(btnStartAll, () =>
+  runChainAction(API_CHAIN_START, { all: true }, "已启动", "全部启动失败")));
+btnStopAll.addEventListener("click", () => withLoading(btnStopAll, () =>
+  runChainAction(API_CHAIN_STOP, { all: true }, "已停止", "全部停止失败")));
+
+// ---------- 链编辑器 ----------
+
+// 技能下拉框（保留当前选择）
+function renderSkillOptions() {
+  const prev = skillSelect.value;
+  const frag = document.createDocumentFragment();
+
+  if (skillsCache.length === 0) {
+    const o = document.createElement("option");
+    o.value = "";
+    o.textContent = "（暂无技能）";
+    frag.appendChild(o);
+  } else {
+    for (const s of skillsCache) {
+      const o = document.createElement("option");
+      o.value = String(s.name ?? "");
+      o.textContent = String(s.name ?? "-") + (s.version ? "  v" + s.version : "");
+      frag.appendChild(o);
+    }
+  }
+  skillSelect.replaceChildren(frag);
+  if (prev && skillsCache.some(s => String(s.name) === prev)) skillSelect.value = prev;
+}
+
+// 进入 / 退出「编辑中」态（编辑态用虚线描边 + 徽标与浏览态区分）
+function markEditing(on) {
+  isEditing = !!on;
+  if (editorBox) editorBox.classList.toggle("active", isEditing);
+  updateChainStatus();
+}
+
+// 编辑区滚动到最右侧（新增节点后可见）
+function scrollEditorToEnd() {
+  const wrap = editorSkills.parentElement;
+  if (wrap) wrap.scrollLeft = wrap.scrollWidth;
+}
+
+// 渲染编辑区：起点端子 + 可拖拽节点（节点之间自动补箭头连接线）+ 追加落点 + 终点端子
+// 注意：只有编辑操作才会调用本函数；1000ms / 3000ms 轮询不会重排编辑区（不打断拖拽）
+function renderEditorSkills() {
+  const nodesHtml = editingSkills.map((s, i) => {
+    const nm  = s.name || "(未命名技能)";
+    const ver = s.version ? ("v" + s.version) : "—";
+    return '<div class="edit-node" draggable="true"' +
+        ' data-idx="' + i + '" data-skill="' + esc(s.name || "") + '"' +
+        ' title="按住可拖拽调整执行顺序">' +
+        '<div class="node-top">' +
+          '<span class="node-idx">' + (i + 1) + "</span>" +
+          '<span class="edit-node-name">' + esc(nm) + "</span>" +
+        "</div>" +
+        '<span class="edit-node-ver">' + esc(ver) + "</span>" +
+        '<div class="edit-node-tools">' +
+          '<button class="btn sm" data-act="up"   data-idx="' + i + '" title="上移">↑</button>' +
+          '<button class="btn sm" data-act="down" data-idx="' + i + '" title="下移">↓</button>' +
+          '<button class="btn sm danger" data-act="del" data-idx="' + i + '" title="移除">✕</button>' +
+        "</div>" +
+      "</div>";
+  }).join('<span class="chain-link"></span>');   // 节点之间自动补连接线（增删 / 排序后实时更新）
+
+  const tailHtml = editingSkills.length
+    ? '<div class="edit-drop-tail">拖到此处追加</div>'
+    : '<div class="edit-drop-tail armed">空链 · 把技能拖到这里 / 从上方添加</div>';
+
+  editorSkills.innerHTML = TERM_START + nodesHtml + tailHtml + TERM_END;
+  editorEmpty.style.display = editingSkills.length ? "none" : "";
+}
+
+// ---------- 拖拽排序（HTML5 Drag & Drop） ----------
+
+// 清理插入位置 / 落点的视觉反馈
+function clearDropHint() {
+  editorSkills.querySelectorAll(".drop-before, .drop-after, .armed").forEach(n => {
+    n.classList.remove("drop-before", "drop-after", "armed");
+  });
+  dragState.over  = -1;
+  dragState.place = "";
+}
+
+// 结束拖拽：复位全部拖拽状态与样式
+function endDrag() {
+  dragState.active = false;
+  dragState.from   = -1;
+  dragState.over   = -1;
+  dragState.place  = "";
+  editorSkills.querySelectorAll(".dragging").forEach(n => n.classList.remove("dragging"));
+  clearDropHint();
+}
+
+// 把 from 位置的节点移动到 over / place 指定的位置；返回是否真的移动了
+function moveEditingNode(from, over, place) {
+  if (!Number.isInteger(from) || from < 0 || from >= editingSkills.length) return false;
+
+  let to;
+  if (place === "end" || !Number.isInteger(over) || over < 0) {
+    to = editingSkills.length;              // 落到链尾
+  } else {
+    to = over + (place === "after" ? 1 : 0);
+  }
+  if (to > from) to -= 1;                   // 源节点被移除后，后面的索引整体前移
+  if (to === from) return false;            // 位置没有变化
+
+  const next = editingSkills.slice();
+  const [moved] = next.splice(from, 1);
+  next.splice(Math.max(0, Math.min(to, next.length)), 0, moved);
+  editingSkills = next;
+  return true;
+}
+
+// 拖拽开始：记录源索引（状态放在模块级 dragState 里）
+editorSkills.addEventListener("dragstart", (e) => {
+  const node = e.target.closest(".edit-node");
+  if (!node) return;
+  const from = Number(node.dataset.idx);
+  if (!Number.isInteger(from)) return;
+
+  dragState.active = true;
+  dragState.from   = from;
+  dragState.over   = -1;
+  dragState.place  = "";
+  node.classList.add("dragging");           // 源节点半透明 + 缩小
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", String(from)); } catch (err) { /* 个别环境忽略 */ }
+  }
+});
+
+// 拖拽经过：必须 preventDefault()，否则不会触发 drop；同时实时高亮插入位置
+editorSkills.addEventListener("dragover", (e) => {
+  if (!dragState.active) return;
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+  const overNode = e.target.closest(".edit-node");
+  const tail     = e.target.closest(".edit-drop-tail");
+
+  clearDropHint();
+
+  if (tail) {                               // 拖到链尾
+    dragState.over  = editingSkills.length;
+    dragState.place = "end";
+    tail.classList.add("armed");
+    return;
+  }
+  if (!overNode) return;
+
+  const idx = Number(overNode.dataset.idx);
+  if (!Number.isInteger(idx)) return;
+
+  // 以节点中线为界判断插到前面还是后面
+  const rect  = overNode.getBoundingClientRect();
+  const place = (e.clientX < rect.left + rect.width / 2) ? "before" : "after";
+  dragState.over  = idx;
+  dragState.place = place;
+  overNode.classList.add(place === "before" ? "drop-before" : "drop-after");
+});
+
+// 放下：按高亮位置移动节点并重绘（连接线随之重排）
+editorSkills.addEventListener("drop", (e) => {
+  if (!dragState.active) return;
+  e.preventDefault();
+
+  const from  = dragState.from;
+  const over  = dragState.over;
+  const place = dragState.place;
+
+  if (place === "end" || over >= 0) {
+    if (moveEditingNode(from, over, place)) {
+      renderEditorSkills();
+      toast("节点顺序已更新", "ok");
+    }
+  } else {
+    renderEditorSkills();                   // 没有明确落点：只清理视觉反馈
+  }
+  endDrag();
+});
+
+// 拖拽结束 / 取消（拖到容器外也会触发）
+editorSkills.addEventListener("dragend", () => endDrag());
+
+// 节点上移 / 下移 / 移除（兜底操作：触屏、键盘、无障碍）
+editorSkills.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const idx = Number(btn.dataset.idx);
+  const act = btn.dataset.act;
+  if (!Number.isInteger(idx)) return;
+
+  if (act === "up" && idx > 0) {
+    [editingSkills[idx - 1], editingSkills[idx]] = [editingSkills[idx], editingSkills[idx - 1]];
+  } else if (act === "down" && idx < editingSkills.length - 1) {
+    [editingSkills[idx + 1], editingSkills[idx]] = [editingSkills[idx], editingSkills[idx + 1]];
+  } else if (act === "del") {
+    editingSkills.splice(idx, 1);
+  } else {
+    return;
+  }
+  markEditing(true);        // 编辑过就算进入编辑态
+  renderEditorSkills();     // 连接线随增删 / 排序实时更新
+});
+
+// 从下拉框添加技能到链尾
+btnAddSkill.addEventListener("click", () => {
+  const name = skillSelect.value;
+  if (!name) {
+    toast("请先选择技能", "err");
+    return;
+  }
+  const found = skillsCache.find(s => String(s.name) === name);
+  if (!found) {
+    toast("未找到技能：" + name, "err");
+    return;
+  }
+  editingSkills.push(normalizeSkill(found));
+  markEditing(true);
+  renderEditorSkills();
+  scrollEditorToEnd();
+  toast("已添加技能 " + name, "ok");
+});
+
+// 把已有链载入编辑区（进入编辑态）
+function loadChainIntoEditor(name) {
+  const c = chains.find(x => x.name === name);
+  if (!c) {
+    toast("未找到技能链：" + name, "err");
+    return;
+  }
+  editingOrigin = c.name;
+  chainNameEl.value = c.name;
+  chainModeEl.value = (c.mode === "while") ? "while" : "once";
+  chainIntervalEl.value = String(Number(c.interval) || 0);
+  editingSkills = c.list.map(pickFullSkill);
+  editorTitle.textContent = "编辑技能链：" + c.name;
+  markEditing(true);
+  renderEditorSkills();
+  scrollEditorToEnd();
+  toast("已载入链 " + c.name + " 到编辑区", "ok");
+}
+
+// 取消编辑 / 清空编辑区（回到浏览态）
+function resetEditor() {
+  editingOrigin = null;
+  chainNameEl.value = "";
+  chainModeEl.value = "while";
+  chainIntervalEl.value = "1000";
+  editingSkills = [];
+  editorTitle.textContent = "新建技能链";
+  dragState.active = false;   // 防拖拽状态残留
+  markEditing(false);
+  renderEditorSkills();
+}
+btnCancelChain.addEventListener("click", resetEditor);
+
+// 保存（新建或修改）后整体提交
+btnSaveChain.addEventListener("click", () => withLoading(btnSaveChain, async () => {
+  const name = chainNameEl.value.trim();
+  if (!name) throw new Error("请填写链名称");
+
+  const mode = (chainModeEl.value === "while") ? "while" : "once";
+  const interval = Number(chainIntervalEl.value);
+  if (!Number.isFinite(interval) || interval < 0) throw new Error("间隔必须是不小于 0 的数字");
+
+  // 校验：不能与其它链重名（编辑自身除外）
+  const dup = chains.find(c => c.name === name && c.name !== editingOrigin);
+  if (dup) throw new Error("链名已存在：" + name);
+
+  // 校验：空链给出提示（允许保存，后端可接受空链）
+  if (editingSkills.length === 0) {
+    if (!confirm("链「" + name + "」没有任何技能，仍然保存吗？")) return;
+  }
+
+  const obj = { name: name, mode: mode, interval: interval, list: editingSkills.map(pickFullSkill) };
+  const next = chains.map(c => ({ ...c, list: c.list.slice() }));  // 浅拷贝，保留未修改的链
+
+  const originIdx = editingOrigin ? next.findIndex(c => c.name === editingOrigin) : -1;
+  let okMsg = "已创建链 " + name;
+
+  if (originIdx >= 0) {
+    next[originIdx] = obj;                    // 原位置替换（含改名）
+    okMsg = "已更新链 " + name;
+  } else {
+    const dupIdx = next.findIndex(c => c.name === name);
+    if (dupIdx >= 0) throw new Error("链名已存在：" + name);
+    next.push(obj);
+  }
+
+  await submitChains(next, okMsg);
+  resetEditor();
+
+  // 链正在运行时，模式 / 轮间隔要等它停掉重启才会生效，这里明确提示一下
+  const rt = runStatus[name];
+  if (rt && (rt.running || rt.starting)) {
+    toast("链 " + name + " 正在运行：新的模式 / 轮间隔要「停止」后再「启动」才生效", "err");
+  }
+}));
+
+// ============================================================
+// 面板四：内存写入 / 删除
+// ============================================================
+function showSetResult(text) {
+  setResultEl.textContent = text;
+}
+
+// 写内存
+async function doSetMemory(value, label) {
+  const key = setKeyEl.value.trim();
+  if (!key) throw new Error("请先填写键名");
+
+  const data = assertOk(await apiPost(API_MEM_SET, { items: { [key]: value } }), "写入失败");
+  const written = (data && data.written != null) ? data.written : "-";
+  const failed = (data && Array.isArray(data.failed)) ? data.failed : [];
+
+  if (failed.length > 0) {
+    const f = failed[0] || {};
+    toast("写入失败：" + (f.name ?? key) + " " + (f.message ?? ""), "err");
+    showSetResult(`写入 ${key}：成功 ${written} 项，失败 ${failed.length} 项（${(f.name ?? key)}：${(f.message ?? "")}）`);
+  } else {
+    toast(`已写入 ${written} 项：` + key, "ok");
+    showSetResult(`写入 ${key} [${label}] → ${truncate(valueToText(value), 120)} · 成功 ${written} 项`);
+  }
+  await pollMemory();
+}
+
+// 从 textarea 解析 JSON 值
+function parseJsonValue() {
+  const text = setValueEl.value.trim();
+  if (text === "") throw new Error("值不能为空");
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error("值不是合法 JSON（字符串需要双引号）");
+  }
+}
+
+// 写入（严格 JSON）
+btnSet.addEventListener("click", () => withLoading(btnSet, async () => {
+  const value = parseJsonValue();
+  await doSetMemory(value, "JSON");
+}));
+
+// 快捷：写入字符串
+btnSetString.addEventListener("click", () => withLoading(btnSetString, async () => {
+  const value = toStrValue(setValueEl.value);
+  if (value === "") throw new Error("值不能为空");
+  await doSetMemory(value, "字符串");
+}));
+
+// 快捷：写入数字
+btnSetNumber.addEventListener("click", () => withLoading(btnSetNumber, async () => {
+  const value = toNumValue(setValueEl.value);
+  await doSetMemory(value, "数字");
+}));
+
+// 快捷：写入布尔
+btnSetBool.addEventListener("click", () => withLoading(btnSetBool, async () => {
+  const value = toBoolValue(setValueEl.value);
+  await doSetMemory(value, "布尔");
+}));
+
+// 快捷：写入数组
+btnSetArray.addEventListener("click", () => withLoading(btnSetArray, async () => {
+  const value = toArrValue(setValueEl.value);
+  await doSetMemory(value, "数组");
+}));
+
+// 按键名删除
+btnDelName.addEventListener("click", () => withLoading(btnDelName, async () => {
+  const names = delNameEl.value.split(/[,，\s]+/).map(s => s.trim()).filter(s => s !== "");
+  if (names.length === 0) throw new Error("请先填写要删除的键名");
+
+  const data = assertOk(await apiPost(API_MEM_DEL, { names: names }), "删除失败");
+  const erased = (data && data.erased != null) ? data.erased : names.length;
+  toast("已删除 " + erased + " 项", "ok");
+  showSetResult("按键名删除：" + names.join(", ") + " · 已删除 " + erased + " 项");
+  await pollMemory();
+}));
+
+// 按前缀删除
+btnDelPrefix.addEventListener("click", () => withLoading(btnDelPrefix, async () => {
+  const prefix = delPrefixEl.value.trim();
+  if (!prefix) throw new Error("请先填写前缀");
+
+  const data = assertOk(await apiPost(API_MEM_DEL, { prefix: prefix }), "删除失败");
+  const erased = (data && data.erased != null) ? data.erased : "-";
+  toast("已删除 " + erased + " 项（前缀 " + prefix + "）", "ok");
+  showSetResult("按前缀删除：" + prefix + " · 已删除 " + erased + " 项");
+  await pollMemory();
+}));
+
+// ============================================================
+// 启动：首屏立即拉一次，然后开启各自轮询
+// ============================================================
+(async function bootstrap() {
+  await pollMemory();
+  await loadSkills();
+  await loadChains(false);
+  await pollRunStatus();
+  renderEditorSkills();
+})();
+
+setInterval(pollMemory,   MEM_INTERVAL);
+setInterval(pollRunStatus, RUN_INTERVAL);
+setInterval(() => loadChains(false), CHAIN_INTERVAL);
+</script>
+</body>
+</html>

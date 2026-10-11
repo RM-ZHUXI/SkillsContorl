@@ -1,0 +1,11 @@
+# net配置
+http_port : 8080                              # http端口
+http_backlog : 20                             # http最大等待数
+http_auto_open : true                         # 启动后自动用默认浏览器打开控制台网页
+# http_webroot : "./www"                      # 静态网页目录（可选，默认 ./www）
+
+# skill配置
+skills_url : "skills"                         # skill路径
+skills_file : "configs/skills.json"           # skill统计文件json
+skillsList_file : "configs/skillsList.json"   # skill链统计文件json
+skills_exclusive: true                        # 同一个技能不允许被两条链同时使用

@@ -1,0 +1,7 @@
+{
+    "name" : "haikang_camera",
+    "description" : "海康相机采集：MV-CS060-10UC-PRO(USB3) 取流，每轮把一帧写进公共内存的 image 键，不弹窗、不存图",
+    "version" : "1.0.5",
+    "author" : ["sxb"],
+    "url" : "build\\bin\\libHAIKANG_CAMERA"
+}

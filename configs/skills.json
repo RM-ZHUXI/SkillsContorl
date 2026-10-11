@@ -1,0 +1,24 @@
+{
+    "last_query_time": "2026-10-10 19:06:09",
+    "skills": [
+        {
+            "author": [
+                "sxb"
+            ],
+            "description": "图像展示：把公共内存里的图（默认键 image）开一个本地窗口显示出来，只读不写",
+            "name": "camera_test",
+            "url": "skills\\camera_test\\build\\bin\\libCAMERA_TEST",
+            "version": "1.4.0"
+        },
+        {
+            "author": [
+                "sxb"
+            ],
+            "description": "海康相机采集：MV-CS060-10UC-PRO(USB3) 取流，每轮把一帧写进公共内存的 image 键，不弹窗、不存图",
+            "name": "haikang_camera",
+            "url": "skills\\haikang_camera\\build\\bin\\libHAIKANG_CAMERA",
+            "version": "1.0.5"
+        }
+    ],
+    "skills_size": 2
+}
