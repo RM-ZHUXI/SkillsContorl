@@ -66,25 +66,18 @@ SKILL_API void init(sc::tools::Memory *memory)
 
     mem = memory;
 
-    // 构造相机：内部完成"定位 config.yaml → 读配置 → 打开设备"，不做任何界面显示
     cap = std::make_unique<hardware::camera>(memory);
 
-    // ★ 相机起不来就让 init 失败：
-    //   框架会捕获这个异常 → 该技能链被标记为失败 → 网页 /api/GetRunStatus 的 error 字段可见，
-    //   而不是"链在跑、每轮都取空图、页面上什么都看不出来"。
     if (!cap->start())
     {
         throw std::runtime_error(
-            "[haikang_camera] 相机启动失败：请检查相机是否插好/是否被别的程序占用，"
-            "以及 skills/haikang_camera/config.yaml 是否可读（详细原因见日志）");
+            "[haikang_camera] 相机启动失败：请检查相机是否插好/是否被别的程序占用，");
     }
-
-    sc::tools::logger()->info("[haikang_camera] init 完成");
 }
 
 /**
  * @brief 每轮取一帧写进公共内存
- * @note  一次调用只干一件事，干完立刻返回（循环由技能链的 mode=while + interval 负责）
+ * @note  一次调用只干一件事，干完立刻返回
  */
 SKILL_API void run()
 {
@@ -96,7 +89,17 @@ SKILL_API void run()
     cv::Mat frame = cap->image();
     if (frame.empty())
     {
-        return;
+        sc::tools::logger()->debug("[haikang_camera] 摄像头掉线重新启动");
+        init(mem);
+        frame = cap->image();
+        if (frame.empty())
+        {
+            throw std::runtime_error("[haikang_camera] 摄像头重新启动失败");
+        }
+        else
+        {
+            throw std::runtime_error("[haikang_camera] 重启成功");
+        }
     }
 
     mem->insertOrAssign("image", frame);

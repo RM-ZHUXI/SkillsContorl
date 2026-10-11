@@ -19,7 +19,7 @@
 
 - [x] 异常抛出问题
 
-- [ ] Git库版本管理问题
+- [x] Git库版本管理问题
 
 ---
 
@@ -155,3 +155,9 @@ flowchart TD
     J --> S[异常被吞<br/>状态不一致]
     K --> T[runEnd 收尾]
 ```
+
+---
+
+## git库管理问题
+
+当前已经上传源码到`https://github.com/RM-ZHUXI/SkillsContorl.git`,并且同步更新skill创建
