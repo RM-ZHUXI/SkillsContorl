@@ -28,12 +28,7 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                 "PingFang SC", "Microsoft YaHei", sans-serif;
-    background:
-      radial-gradient(1200px 800px at 10% -10%, rgba(124,92,255,.12), transparent 60%),
-      radial-gradient(900px 600px at 110% 10%,  rgba(79,156,249,.10), transparent 60%),
-      var(--bg);
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     padding: 32px 24px 60px;
@@ -1196,50 +1191,35 @@ async function readBody(res) {
   try { return await res.json(); } catch (e) { return null; }
 }
 
-// 统一请求。注意：非 2xx 时也要把服务端 JSON 里的 message 带出来，
+// 统一 GET。注意：非 2xx 时也要把服务端 JSON 里的 message 带出来，
 // 否则界面只能显示 "HTTP 400" 这种没有信息量的提示
-//
-// ★ 必须带超时：后端一旦卡住（例如线程死锁），没有超时的 fetch 会一直挂着，
-//   withLoading 的 finally 永远等不到 → 按钮的 loading 状态解不掉 → 整个页面
-//   看起来"死了"，点什么都没反应。宁可明确报「请求超时」。
-const API_TIMEOUT_MS = 8000;
-
-async function apiFetch(path, options) {
-  const ctl   = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), API_TIMEOUT_MS);
-  try {
-    const res  = await fetch(path, Object.assign({ cache: "no-store", signal: ctl.signal }, options || {}));
-    const data = await readBody(res);
-    if (!res.ok) {
-      const err = new Error((data && data.message) || ("HTTP " + res.status));
-      err.status = res.status;
-      err.data   = data;   // 400 也可能带着 started / failed / stopped，调用方要用
-      throw err;
-    }
-    return data;
-  } catch (e) {
-    if (e && e.name === "AbortError") {
-      const err = new Error("请求超时 " + API_TIMEOUT_MS + "ms：后端没有响应（详见 logs/ 里的日志）");
-      err.timeout = true;
-      throw err;
-    }
-    throw e;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 async function apiGet(path) {
-  return apiFetch(path, { method: "GET" });
+  const res = await fetch(path, { cache: "no-store" });
+  const data = await readBody(res);
+  if (!res.ok) {
+    const err = new Error((data && data.message) || ("HTTP " + res.status));
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
 }
 
 // 统一 POST JSON（同样保留服务端的 message / data）
 async function apiPost(path, body) {
-  return apiFetch(path, {
+  const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
+  const data = await readBody(res);
+  if (!res.ok) {
+    const err = new Error((data && data.message) || ("HTTP " + res.status));
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
 }
 
 // 响应里 status === "error" 时抛错
@@ -1267,9 +1247,14 @@ async function withLoading(btn, fn) {
 // ============================================================
 // 面板一：内存实时监控
 // ============================================================
-let memRowSig  = "";     // 名称|类型|大小 列表签名，变了才重建行
-let memValEls  = [];     // 与行同序的值单元格，用于原地更新
-let memDegraded = false; // 是否降级为 GetMemory
+// 结构签名：只含「名称|类型」，按服务端返回顺序拼接。
+// 不含 size / value / degraded —— 这些属于「可变数据」，
+// 变化时只原地更新单元格，绝不重建整表（否则动画会一直重放）。
+let memRowSig    = "";
+let memValEls    = [];           // 与行同序的值单元格
+let memSizeEls   = [];           // 与行同序的大小单元格
+let memKnownNames = new Set();   // 上一轮出现过的行名（用于判断"新增行"）
+let memDegraded  = false;        // 是否降级为 GetMemory
 
 // 是否可发起请求（页面隐藏时跳过轮询）
 function canPoll() {
@@ -1288,32 +1273,48 @@ function renderMemory(list, degraded) {
 
   setCount(memCount, list.length);
 
+  // 结构签名：只关心「有哪些行、什么类型、什么顺序」
   const rowSig = list
-    .map(x => `${(x && x.name)}|${(x && x.type)}|${(x && x.size)}`)
-    .join(";") + (degraded ? "|D" : "");
+    .map(x => `${(x && x.name)}|${(x && x.type)}`)
+    .join(";");
 
   if (rowSig === memRowSig) {
-    // 结构未变，仅原地刷新「值」列，避免每 500ms 重建整表
+    // 结构未变：只原地刷新「大小」和「值」两列，避免重建 DOM
     for (let i = 0; i < list.length; i++) {
-      setValCell(memValEls[i], list[i] ? list[i].value : undefined);
+      const item = list[i] || {};
+      const sizeEl = memSizeEls[i];
+      if (sizeEl) sizeEl.textContent = (item.size ?? "-");
+      setValCell(memValEls[i], item.value);
     }
     return;
   }
+
+  // 结构变化：重建整表
   memRowSig = rowSig;
   memValEls = [];
+  memSizeEls = [];
 
   if (list.length === 0) {
     memBody.replaceChildren();
     memEmpty.style.display = "";
+    memKnownNames = new Set();
     return;
   }
   memEmpty.style.display = "none";
 
   const frag = document.createDocumentFragment();
+  const nextNames = new Set();
+
   for (const raw of list) {
     const item = raw || {};
+    const name = String(item.name ?? "-");
+    nextNames.add(name);
+
     const tr = document.createElement("tr");
-    tr.classList.add("row-enter");
+    // 只有真正新增的行才播放入场动画，避免每次重建全部重放
+    if (!memKnownNames.has(name)) {
+      tr.classList.add("row-enter");
+    }
 
     const tdName = document.createElement("td");
     tdName.className = "name";
@@ -1328,6 +1329,7 @@ function renderMemory(list, degraded) {
     const tdSize = document.createElement("td");
     tdSize.className = "num";
     tdSize.textContent = item.size ?? "-";
+    memSizeEls.push(tdSize);
 
     const tdVal = document.createElement("td");
     tdVal.className = "val-cell";
@@ -1340,6 +1342,8 @@ function renderMemory(list, degraded) {
     tr.append(tdName, tdType, tdSize, tdVal);
     frag.appendChild(tr);
   }
+
+  memKnownNames = nextNames;
   memBody.replaceChildren(frag);
 }
 
@@ -1632,12 +1636,6 @@ function renderChains() {
   updateChainStatus();
 }
 
-// 宽松转数字：字段缺失 / 非数字 / null 一律当 0，避免界面出现 "undefined"
-function asNum(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-}
-
 // 用 GetRunStatus 的结果刷新每条链带的状态徽标 / 元信息 / 节点高亮
 // （动态文本一律 textContent 写入，绝不拼接未转义 HTML）
 function updateChainStatus() {
@@ -1651,12 +1649,6 @@ function updateChainStatus() {
     const isRunning  = !!(st && st.running);
     const isStarting = !!(st && st.starting);
     if (isRunning) runningCount++;
-
-    // 当前正在跑的技能名。
-    // ★ 两套实现表示"没有"的方式不一样：RunSkillsLists 给空串，旧的 Runskills 给
-    //   字符串 "null"，直接拼上去界面上就会出现「当前技能 null」，这里统一归一化。
-    const curRaw  = (st && st.current != null) ? String(st.current).trim() : "";
-    const current = (curRaw === "" || curRaw === "null" || curRaw === "undefined") ? "" : curRaw;
 
     // 整条链运行中：描边发光 + 连接线流动动画
     band.classList.toggle("running", isRunning);
@@ -1687,23 +1679,8 @@ function updateChainStatus() {
         : (c.list ? c.list.length : 0);
       const parts = ["技能 " + total + " 个"];
       if (st) {
-        parts.push("已跑轮次 " + asNum(st.loop));
-        parts.push("当前技能 " + (current || "-"));
-
-        // 节拍观测：这几项只有新实现（RunSkillsLists）才有真实值，旧的恒为 0，
-        // 所以「有值才显示」，免得本来就好用的界面上挂一串没意义的 0
-        const interval = asNum(st.interval);
-        const tickMs   = asNum(st.tick_ms);
-        const roundMs  = asNum(st.round_ms);
-        const inited   = asNum(st.inited);
-        const skipped  = asNum(st.skipped);
-
-        if (interval > 0) parts.push("节拍 " + interval + "ms");
-        if (tickMs   > 0) parts.push("实际间隔 " + tickMs + "ms");
-        if (roundMs  > 0) parts.push("本轮耗时 " + roundMs + "ms");
-        if (inited   > 0) parts.push("已 init " + inited + " 个");
-        if (skipped  > 0) parts.push("丢节拍 " + skipped + " 次");
-
+        parts.push("已跑轮次 " + ((st.loop != null) ? st.loop : 0));
+        parts.push("当前技能 " + (st.current || "-"));
         if (st.start_time)  parts.push("启动 " + st.start_time);
         if (st.update_time) parts.push("更新 " + st.update_time);
       } else {
@@ -1721,7 +1698,7 @@ function updateChainStatus() {
     }
 
     // 运行中的节点高亮：current 与该节点技能名一致时呼吸发光
-    const cur = (isRunning && current) ? current : "";
+    const cur = (isRunning && st && st.current) ? String(st.current) : "";
     band.querySelectorAll(".chain-node").forEach(node => {
       node.classList.toggle("active", cur !== "" && node.dataset.skill === cur);
     });
@@ -1735,9 +1712,7 @@ function updateChainStatus() {
 // 编辑区镜像高亮：正在编辑的链处于运行中时，同步高亮对应编辑节点
 function updateEditorHighlight() {
   const st  = (isEditing && editingOrigin) ? runStatus[editingOrigin] : null;
-  const raw = (st && st.running && st.current != null) ? String(st.current).trim() : "";
-  // 同 updateChainStatus：把旧的 "null" 占位也当成"没有当前技能"
-  const cur = (raw === "" || raw === "null" || raw === "undefined") ? "" : raw;
+  const cur = (st && st.running && st.current) ? String(st.current) : "";
   editorSkills.querySelectorAll(".edit-node").forEach(node => {
     node.classList.toggle("active", cur !== "" && node.dataset.skill === cur);
   });
@@ -1760,58 +1735,16 @@ async function pollRunStatus() {
   }
 }
 
-// 把接口返回的 started / stopped / failed 拼成一句人话。
-// 接口的成功响应长这样：{status, started:[名...], failed:[{name,message}...], running:n}
-// 停止响应长这样：      {status, stopped:[名...], running:n}
-function chainResultText(data, okWord) {
-  const okList = []
-    .concat(Array.isArray(data && data.started) ? data.started : [])
-    .concat(Array.isArray(data && data.stopped) ? data.stopped : []);
-  const failed = Array.isArray(data && data.failed) ? data.failed : [];
-
-  const segs = [];
-  if (okList.length) {
-    segs.push(okWord + " " + okList.length + " 条（" + okList.join("、") + "）");
-  }
-  if (failed.length) {
-    segs.push("失败 " + failed.length + " 条：" + failed.map(f =>
-      String((f && f.name) || "?") + " " + String((f && f.message) || "")).join("；"));
-  }
-  if (segs.length === 0) segs.push((data && data.message) || "没有需要处理的链");
-  return segs.join("；");
-}
-
-// 启动 / 停止链的公共流程。
-// ★ 关键点：后端在「部分成功」时返回的是 **HTTP 400** 但响应体里带着
-//   started/failed —— 这种情况下 apiPost 会先抛异常，assertOk 根本没机会执行。
-//   所以必须从异常上取 e.data，否则界面上只会显示一句没信息量的 "HTTP 400"。
-async function runChainAction(path, payload, okWord, failWord) {
-  try {
-    const data = assertOk(await apiPost(path, payload), failWord);
-    toast(chainResultText(data, okWord), "ok");
-  } catch (e) {
-    const d = e && e.data;
-    const hasDetail = d && (Array.isArray(d.started) || Array.isArray(d.stopped) || Array.isArray(d.failed));
-
-    if (hasDetail) {
-      const anyFailed = Array.isArray(d.failed) && d.failed.length > 0;
-      toast(chainResultText(d, okWord), anyFailed ? "err" : "ok");
-    } else if (d && d.message) {
-      toast(String(d.message), "err");                 // 例如「该技能链没有运行记录: xxx」
-    } else {
-      toast(String((e && e.message) || e), "err");     // 超时 / 网络错误
-    }
-  }
-  // 不管成功失败都刷新一次状态：失败的链会在卡片上显示具体原因（statusJson 的 error 字段）
-  await pollRunStatus();
-}
-
 // 启动 / 停止单条链
 async function startChain(name) {
-  await runChainAction(API_CHAIN_START, { name: name }, "已启动", "启动失败");
+  const data = assertOk(await apiPost(API_CHAIN_START, { name: name }), "启动失败");
+  toast((data && data.message) ? data.message : ("已启动链 " + name), "ok");
+  await pollRunStatus();
 }
 async function stopChain(name) {
-  await runChainAction(API_CHAIN_STOP, { name: name }, "已停止", "停止失败");
+  const data = assertOk(await apiPost(API_CHAIN_STOP, { name: name }), "停止失败");
+  toast((data && data.message) ? data.message : ("已停止链 " + name), "ok");
+  await pollRunStatus();
 }
 
 // 整体提交：必须提交完整数组（含未修改的链）
@@ -1859,11 +1792,17 @@ chainList.addEventListener("click", (e) => {
   }
 });
 
-// 全部启动 / 全部停止（同样走 runChainAction：部分成功也要如实显示每一条链的结果）
-btnStartAll.addEventListener("click", () => withLoading(btnStartAll, () =>
-  runChainAction(API_CHAIN_START, { all: true }, "已启动", "全部启动失败")));
-btnStopAll.addEventListener("click", () => withLoading(btnStopAll, () =>
-  runChainAction(API_CHAIN_STOP, { all: true }, "已停止", "全部停止失败")));
+// 全部启动 / 全部停止
+btnStartAll.addEventListener("click", () => withLoading(btnStartAll, async () => {
+  const data = assertOk(await apiPost(API_CHAIN_START, { all: true }), "全部启动失败");
+  toast((data && data.message) ? data.message : "已启动全部技能链", "ok");
+  await pollRunStatus();
+}));
+btnStopAll.addEventListener("click", () => withLoading(btnStopAll, async () => {
+  const data = assertOk(await apiPost(API_CHAIN_STOP, { all: true }), "全部停止失败");
+  toast((data && data.message) ? data.message : "已停止全部技能链", "ok");
+  await pollRunStatus();
+}));
 
 // ---------- 链编辑器 ----------
 
