@@ -28,8 +28,7 @@
     #define SKILL_API extern "C" __attribute__((visibility("default")))
 #endif
 
-#include "tools/memory.hpp"
-
-
+#include "tools/tools.hpp"
+#include "net/net.hpp"
 
 #endif // SKILLSCONTROL_HPP
