@@ -5,6 +5,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <fstream>
 
 #include "tools/logger.hpp"
 
@@ -58,6 +59,53 @@ inline T read(const YAML::Node & yaml, const std::string & key)
   } catch (const std::exception & e) {
     logger()->error("[YAML] 字段 {} 类型不匹配: {}", key, e.what());
     throw std::runtime_error("[YAML] 字段 " + key + " 类型不匹配");
+  }
+}
+
+/**
+ * @brief 覆盖 yaml 节点里某个已存在字段的值
+ * @param yaml 根节点（必须是可修改的引用）
+ * @param key  字段名
+ * @param value 新值
+ * @throw std::runtime_error 字段不存在或写入失败
+ * @note 只修改内存中的节点，不会自动落盘；需要保存请再调用 save()，会删除注释
+ */
+template <typename T>
+inline void overwrite(YAML::Node & yaml, const std::string & key, const T & value)
+{
+  if (!yaml[key]) {
+    logger()->error("[YAML] 缺少字段，无法覆盖: {}", key);
+    throw std::runtime_error("[YAML] 缺少字段，无法覆盖: " + key);
+  }
+
+  try {
+    yaml[key] = value;
+  } catch (const std::exception & e) {
+    logger()->error("[YAML] 覆盖字段 {} 失败: {}", key, e.what());
+    throw std::runtime_error("[YAML] 覆盖字段 " + key + " 失败");
+  }
+}
+
+/**
+ * @brief 把 yaml 节点写回文件
+ * @param path 文件路径
+ * @param yaml 根节点
+ * @throw std::runtime_error 写入失败
+ * @note 会删除注释
+ */
+inline void save(const std::string & path, const YAML::Node & yaml)
+{
+  try {
+    YAML::Emitter out;
+    out << yaml;
+    std::ofstream fout(path);
+    if (!fout.is_open()) {
+      throw std::runtime_error("[YAML] 无法写入文件: " + path);
+    }
+    fout << out.c_str();
+  } catch (const std::exception & e) {
+    logger()->error("[YAML] 保存失败: {} ({})", path, e.what());
+    throw std::runtime_error("[YAML] 保存失败: " + path);
   }
 }
 
