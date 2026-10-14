@@ -1,11 +1,20 @@
 # net配置
-http_port : 8080                              # http端口
-http_backlog : 20                             # http最大等待数
-http_auto_open : true                         # 启动后自动用默认浏览器打开控制台网页
-# http_webroot : "./www"                      # 静态网页目录（可选，默认 ./www）
+http_port : 8080                               # http端口
+http_backlog : 20                              # http最大等待数
+http_auto_open : true                          # 启动后自动用默认浏览器打开控制台网页
+# http_webroot : "./www"                       # 静态网页目录（可选，默认 ./www）
 
 # skill配置
-skills_url : "skills"                         # skill路径
-skills_file : "configs/skills.json"           # skill统计文件json
-skillsList_file : "configs/skillsList.json"   # skill链统计文件json
-skills_exclusive: true                        # 同一个技能不允许被两条链同时使用
+skills_url : "skills"                          # skill路径
+skills_file : "configs/skills.json"            # skill统计文件json
+skillsList_file : "configs/skillsList.json"    # skill链统计文件json
+skills_exclusive: true                         # 同一个技能不允许被两条链同时使用
+
+# funcions配置
+common_configPath : "skills/configs.yaml"       # 默认公共配置文件路径
+calibrate_camera_path : "calibrate/camera"      # 默认读取/储存标定照片路径
+calibrate_camera_matrix_name : "camera_matrix"  # matrix在公共配置文件中的键名称
+calibrate_camera_coeffs_name : "distort_coeffs" # coeffs在公共配置文件中的键名称
+calibrate_camera_cols: 7                        # 默认标定板行
+calibrate_camera_rows: 7                        # 默认标定板列
+calibrate_camera_center_distance_mm: 35         # 默认标定板距离

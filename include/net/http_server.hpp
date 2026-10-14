@@ -5,29 +5,6 @@
  * @date        2026-09-13
  * @version     1.0.0
  * @note        第二次封装 http.hpp，提供更上层的 http 服务器接口
- *
- * @version     1.1.0
- * @par         1. 全部业务接口统一成 JSON 进出（请求体 JSON -> 响应体 JSON）
- *              2. 新增公共内存读写接口：GetMemoryValues / SetMemory / DelMemory
- *              3. 新增技能链运行控制接口：StartSkillChain / StopSkillChain / GetRunStatus
- *              4. 注册路由与 handler 声明一一对应（原来 UpdateSkillChain 声明了但没注册）
- *
- * @par 接口一览（都返回 JSON，status 字段为 ok / error）
- *      GET  /api/GetMemory         内存键值概览 [{name,type,size}]
- *      GET  /api/GetMemoryValues   内存键值 + 具体值
- *      POST /api/SetMemory         写入内存 {"items":{"键":值}}
- *      POST /api/DelMemory         删除内存 {"names":[...]} 或 {"prefix":"..."}
- *      GET  /api/GetSkills         技能列表
- *      GET  /api/UpdateSkills      重新扫描技能
- *      GET  /api/GetSkillChain     技能链列表
- *      POST /api/UpdateSkillChain  覆盖保存技能链数组
- *      POST /api/StartSkillChain   启动链 {"name":"x"} 或 {"all":true}
- *      POST /api/StopSkillChain    停止链 {"name":"x"} 或 {"all":true}
- *      GET  /api/GetRunStatus      技能链运行状态
- *
- * @version     1.2.0
- * @par         启动服务器后可自动用系统默认浏览器打开控制台网页，
- *              开关见 config.yaml 的 http_auto_open（缺省 true）
  */
 
 #ifndef HTTP_SERVER_HPP
@@ -42,15 +19,20 @@
     #endif
     #include <winsock2.h>
     #include <ws2tcpip.h>
+    #include <shellapi.h>
 #endif
 
-
+#include <filesystem>
+#include <system_error>
 #include <string>
 #include <nlohmann/json.hpp>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 #include "../tools/tools.hpp"
 #include "net/http.hpp"
-
+#include "../functions/calibrate_camera.hpp"
 
 namespace sc::net
 {
@@ -65,10 +47,10 @@ public:
      * @param       findSkills  技能查找器引用
      * @param       assign  技能链管理器引用
      * @param       runSkillsLists_ 链运行管理器引用
+     * @param       calibratecamera 摄像头标定程序
      */
-    HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills,
-                       tools::Assign &assign,tools::Runskills & runSkillsLists_);
-
+    HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills, tools::Assign &assign,tools::Runskills &runSkillsLists_,functions::CalibrateCamera calibratecamera);
+    
     ~HttpServer() = default;
 
     HttpServer(const HttpServer&) = delete;
@@ -178,6 +160,39 @@ private:
      */
     void apiGetRunStatus(std::string body, HttpHand& hand);
 
+    // ---------------- 摄像头标定 ----------------
+
+    /**
+     * @brief 内置 API：读取当前标定配置
+     */
+    void apiGetCalibrateConfig(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：修改标定配置（只更新传入的字段）
+     * @note  body 例：{"path":"photos","cols":9,"rows":6,"distance":25,
+     *                  "openCamera":false,"matrixName":"K","coeffsName":"D"}
+     */
+    void apiSetCalibrateConfig(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：异步启动标定
+     * @note  起一个线程执行 CalibrateCamera::start()，立即返回；
+     *        结果由 GetCalibrateStatus 轮询获取
+     */
+    void apiStartCalibrate(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：查询标定状态 / 结果
+     * @note  返回 { state: idle|running|done|failed, running: bool, result: "..." }
+     */
+    void apiGetCalibrateStatus(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：用系统文件管理器打开标定图片路径
+     * @note  供前端「打开文件夹」按钮调用；后端调用 explorer / xdg-open
+     */
+    void apiOpenCalibrateFolder(std::string body, HttpHand& hand);
+
     // ---------------- 内部工具 ----------------
 
     /**
@@ -204,12 +219,19 @@ private:
     void registerAll();
 
 private:
-    tools::FindSkills&    findSkills_;      ///< 技能查找器引用
-    tools::Memory&        memory_;          ///< 内存管理器引用
-    tools::Assign&        assign_;          ///< 技能链管理器引用
-    tools::Runskills&     runSkillsLists_;  ///< 技能链线程管理器引用(废弃)
-    Http                  http_;            ///< 底层 http 服务器
-    bool                  autoOpen_ = true; ///< 启动后是否自动打开控制台网页
+    tools::FindSkills&    findSkills_;           ///< 技能查找器引用
+    tools::Memory&        memory_;               ///< 内存管理器引用
+    tools::Assign&        assign_;               ///< 技能链管理器引用
+    tools::Runskills&     runSkillsLists_;       ///< 技能链线程管理器引用(废弃)
+    Http                  http_;                 ///< 底层 http 服务器
+    functions::CalibrateCamera calibratecamera_; ///< 摄像头标定程序
+    bool                  autoOpen_ = true;      ///< 启动后是否自动打开控制台网页
+
+    // ---- 标定异步状态 ----
+    std::atomic<bool> calibRunning_{false};   ///< 标定线程是否在跑（CAS 互斥用）
+    std::mutex        calibMutex_;            ///< 保护 calibState_ / calibResult_
+    std::string       calibState_ = "idle";   ///< idle / running / done / failed
+    std::string       calibResult_;           ///< 标定结束返回的字符串
 };
 
 } // namespace sc::net

@@ -18,6 +18,7 @@ target_link_libraries(net
         nlohmann_json::nlohmann_json
         yaml-cpp::yaml-cpp
         tools
+        functions
 )
 
 if(WIN32)

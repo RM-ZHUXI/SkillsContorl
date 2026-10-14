@@ -260,6 +260,218 @@ void HttpServer::apiUpdateSkills(std::string body, HttpHand& hand)
 }
 
 // ============================================================
+// 内置 API handler：摄像头标定
+// ============================================================
+
+namespace
+{
+// 把 CalibrateCamera 的 9 个字段打包成 JSON（本文件内部使用，不对外暴露）
+nlohmann::json calibConfigToJson(functions::CalibrateCamera& c)
+{
+    return {
+        {"commonConfigPath", c.getCommonConfigPath()},
+        {"path",             c.getPath()},
+        {"matrixName",       c.getMatrixName()},
+        {"coeffsName",       c.getCoeffsName()},
+        {"cols",             c.getCols()},
+        {"rows",             c.getRows()},
+        {"distance",         c.getDistance()}
+    };
+}
+} // namespace
+
+void HttpServer::apiGetCalibrateConfig(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    nlohmann::json j;
+    j["status"] = "ok";
+    j["config"] = calibConfigToJson(calibratecamera_);
+    replyJson(hand, j);
+}
+
+void HttpServer::apiSetCalibrateConfig(std::string body, HttpHand& hand)
+{
+    using json = nlohmann::json;
+
+    // 标定运行中不允许改配置，避免线程里读到半新半旧的参数
+    if (calibRunning_.load())
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "标定正在运行，暂不能修改配置"} }, 400);
+        return;
+    }
+
+    json req;
+    std::string err;
+    if (!parseBody(body, req, err))
+    {
+        replyJson(hand, { {"status", "error"}, {"message", err} }, 400);
+        return;
+    }
+    if (!req.is_object())
+    {
+        replyJson(hand, { {"status", "error"}, {"message", "body 应为 JSON 对象"} }, 400);
+        return;
+    }
+
+    // 逐字段更新，缺省字段保持原值
+    try
+    {
+        if (req.contains("commonConfigPath") && req["commonConfigPath"].is_string())
+            calibratecamera_.setCommonConfigPath(req["commonConfigPath"].get<std::string>());
+        if (req.contains("path") && req["path"].is_string())
+            calibratecamera_.setPath(req["path"].get<std::string>());
+        if (req.contains("matrixName") && req["matrixName"].is_string())
+            calibratecamera_.setMatrixName(req["matrixName"].get<std::string>());
+        if (req.contains("coeffsName") && req["coeffsName"].is_string())
+            calibratecamera_.setCoeffsName(req["coeffsName"].get<std::string>());
+        if (req.contains("cols") && req["cols"].is_number_integer())
+            calibratecamera_.setCols(req["cols"].get<int>());
+        if (req.contains("rows") && req["rows"].is_number_integer())
+            calibratecamera_.setRows(req["rows"].get<int>());
+        if (req.contains("distance") && req["distance"].is_number_integer())
+            calibratecamera_.setDistance(req["distance"].get<int>());
+    }
+    catch (const std::exception& e)
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", std::string("设置失败：") + e.what()} }, 400);
+        return;
+    }
+
+    tools::logger()->info("[Http] 标定配置已更新");
+
+    json j;
+    j["status"] = "ok";
+    j["config"] = calibConfigToJson(calibratecamera_);   // 回显最新配置
+    replyJson(hand, j);
+}
+
+void HttpServer::apiStartCalibrate(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    // CAS：false -> true，已在跑就直接拒掉（防止并发触发两条标定线程）
+    bool expected = false;
+    if (!calibRunning_.compare_exchange_strong(expected, true))
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "标定正在进行中，请等待完成"} }, 400);
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lk(calibMutex_);
+        calibState_  = "running";
+        calibResult_.clear();
+    }
+
+    tools::logger()->info("[Http] 启动标定线程");
+
+    // 独立线程执行；detach 后由 calibRunning_ / calibState_ 做生命周期跟踪
+    std::thread([this]() {
+        std::string result;
+        std::string state;
+
+        try
+        {
+            result = calibratecamera_.start();      // 同步阻塞，跑完才返回
+            state  = "done";
+        }
+        catch (const std::exception& e)
+        {
+            result = std::string("标定异常: ") + e.what();
+            state  = "failed";
+        }
+        catch (...)
+        {
+            result = "标定异常: 未知错误";
+            state  = "failed";
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(calibMutex_);
+            calibState_  = state;
+            calibResult_ = result;
+        }
+
+        calibRunning_.store(false);
+        tools::logger()->info("[Http] 标定线程结束，state={}，result={}", state, result);
+    }).detach();
+
+    replyJson(hand, { {"status", "ok"},
+                      {"message", "标定已启动，请轮询 GetCalibrateStatus 获取结果"},
+                      {"state", "running"} });
+}
+
+void HttpServer::apiGetCalibrateStatus(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    nlohmann::json j;
+    {
+        std::lock_guard<std::mutex> lk(calibMutex_);
+        j["state"]   = calibState_;
+        j["running"] = (calibState_ == "running");
+        if (!calibResult_.empty())
+            j["result"] = calibResult_;
+    }
+    j["status"] = "ok";
+    replyJson(hand, j);
+}
+
+void HttpServer::apiOpenCalibrateFolder(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    // 取当前配置里的标定图片路径
+    std::string folder = calibratecamera_.getPath();
+    if (folder.empty())
+    {
+        replyJson(hand, { {"status", "error"}, {"message", "标定图片路径为空，请先保存配置"} }, 400);
+        return;
+    }
+
+    // 用绝对路径：explorer / xdg-open 对相对路径的解析基于各自的 cwd，
+    // 跟服务进程的 cwd 不一定一样，相对路径会打开错地方
+    std::error_code ec;
+    const std::filesystem::path absPath = std::filesystem::absolute(folder, ec);
+    if (ec || !std::filesystem::exists(absPath, ec) || !std::filesystem::is_directory(absPath, ec))
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "路径不存在或不是目录: " + folder} }, 400);
+        return;
+    }
+
+    const std::string abs = absPath.string();
+    bool ok = false;
+
+#ifdef _WIN32
+    // explorer 打开文件夹；ShellExecuteA 用 "open" 也行，但 explorer 直接调用更稳
+    const std::string cmd = "explorer \"" + abs + "\"";
+    // std::system 在 Windows 下会弹黑框，用 ShellExecuteA 更干净
+    HINSTANCE ret = ShellExecuteA(nullptr, "open", abs.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ok = (reinterpret_cast<INT_PTR>(ret) > 32);
+#else
+    const std::string cmd = "xdg-open \"" + abs + "\" >/dev/null 2>&1 &";
+    ok = (std::system(cmd.c_str()) == 0);
+#endif
+
+    if (ok)
+    {
+        tools::logger()->info("[Http] 已打开标定文件夹: {}", abs);
+        replyJson(hand, { {"status", "ok"}, {"path", abs} });
+    }
+    else
+    {
+        tools::logger()->warn("[Http] 打开标定文件夹失败: {}", abs);
+        replyJson(hand, { {"status", "error"},
+                          {"message", "打开失败: " + abs} }, 500);
+    }
+}
+
+// ============================================================
 // 内置 API handler：技能链
 // ============================================================
 
@@ -425,13 +637,13 @@ void HttpServer::apiGetRunStatus(std::string body, HttpHand& hand)
 // 构造 / 析构
 // ============================================================
 
-HttpServer::HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills,
-                       tools::Assign &assign,tools::Runskills &runSkillsLists_)
+HttpServer::HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills, tools::Assign &assign,tools::Runskills &runSkillsLists_,functions::CalibrateCamera calibratecamera)
     : findSkills_(findSkills)
     , memory_(memory)
     , assign_(assign)
     , runSkillsLists_(runSkillsLists_)
     , http_(config)
+    , calibratecamera_(calibratecamera)
 {
     // http_auto_open：启动后要不要自动拉起浏览器（缺省 true，配置里没写就是开）
     try
@@ -471,6 +683,13 @@ void HttpServer::registerAll()
     registerHandler("/api/StartSkillChain",  [this](std::string body, HttpHand& hand){apiStartSkillChain(std::move(body), hand);});
     registerHandler("/api/StopSkillChain",   [this](std::string body, HttpHand& hand){apiStopSkillChain(std::move(body), hand);});
     registerHandler("/api/GetRunStatus",     [this](std::string body, HttpHand& hand){apiGetRunStatus(std::move(body), hand);});
+
+    // ---- 摄像头标定 ----
+    registerHandler("/api/GetCalibrateConfig",[this](std::string body, HttpHand& hand){apiGetCalibrateConfig(std::move(body), hand);});
+    registerHandler("/api/SetCalibrateConfig",[this](std::string body, HttpHand& hand){apiSetCalibrateConfig(std::move(body), hand);});
+    registerHandler("/api/StartCalibrate",[this](std::string body, HttpHand& hand){apiStartCalibrate(std::move(body), hand);});
+    registerHandler("/api/GetCalibrateStatus",[this](std::string body, HttpHand& hand){apiGetCalibrateStatus(std::move(body), hand);});
+    registerHandler("/api/OpenCalibrateFolder",[this](std::string body, HttpHand& hand){apiOpenCalibrateFolder(std::move(body), hand);});
 }
 
 void HttpServer::registerHandler(const std::string& path, HttpHandler handler)

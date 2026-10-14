@@ -29,6 +29,7 @@ endif()
 # 添加子目录
 add_subdirectory(tools)
 add_subdirectory(net)
+add_subdirectory(functions)
 
 # 创建主程序
 add_executable(skillcontorl projects/main.cpp)
@@ -45,6 +46,7 @@ target_link_libraries(skillcontorl
     PRIVATE
         tools                
         net
+        functions
         ${OpenCV_LIBS}      
 )
 

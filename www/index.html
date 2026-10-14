@@ -112,6 +112,7 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 22px;
+    align-items: start;
   }
 
   @media (min-width: 960px) {
@@ -133,6 +134,7 @@
   .panel:nth-child(2) { animation-delay: .15s; }
   .panel:nth-child(3) { animation-delay: .25s; }
   .panel:nth-child(4) { animation-delay: .35s; }
+  .panel:nth-child(5) { animation-delay: .45s; }
 
   @keyframes fadeUp {
     to { opacity: 1; transform: none; }
@@ -749,6 +751,92 @@
     40%  { transform: scale(1.25); color: var(--accent); }
     100% { transform: scale(1);    color: inherit; }
   }
+
+  /* ---------- 摄像头标定 ---------- */
+  .calib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  /* 标定状态徽标 */
+  .calib-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .calib-badge.idle    { color: var(--text-dim); }
+  .calib-badge.running {
+    color: #e3b341;
+    border-color: rgba(210,153,34,.45);
+    background: rgba(210,153,34,.12);
+    animation: calibBlink 1.2s ease-in-out infinite;
+  }
+  .calib-badge.done {
+    color: #7ee787;
+    border-color: rgba(63,185,80,.4);
+    background: rgba(63,185,80,.12);
+  }
+  .calib-badge.failed {
+    color: #ffd5d3;
+    border-color: rgba(248,81,73,.4);
+    background: rgba(248,81,73,.12);
+  }
+  @keyframes calibBlink {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(210,153,34,.5); }
+    50%      { box-shadow: 0 0 0 8px rgba(210,153,34,0); }
+  }
+
+  /* 标定结果输出框 */
+  .calib-result {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,.014);
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #b9c4d2;
+    word-break: break-all;
+    white-space: pre-wrap;
+    min-height: 20px;
+  }
+  .calib-result.ok    { border-color: rgba(63,185,80,.35);  color: #cbe6cf; }
+  .calib-result.err   { border-color: rgba(248,81,73,.35);  color: #ffd5d3; }
+
+  /* 运行中的进度条（indeterminate 动画） */
+  .calib-progress {
+    margin-top: 12px;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.05);
+    overflow: hidden;
+    position: relative;
+    display: none;
+  }
+  .calib-progress.show { display: block; }
+  .calib-progress::after {
+    content: "";
+    position: absolute;
+    left: -35%;
+    top: 0; bottom: 0;
+    width: 35%;
+    border-radius: 3px;
+    background: linear-gradient(90deg,
+      rgba(79,156,249,0),  rgba(79,156,249,.9), rgba(124,92,255,.9),
+      rgba(79,156,249,0));
+    animation: calibSlide 1.2s ease-in-out infinite;
+  }
+  @keyframes calibSlide {
+    from { left: -35%; }
+    to   { left: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -758,7 +846,7 @@
     <div class="logo">S</div>
     <div>
       <h1>Skill Control · 控制台</h1>
-      <div class="subtitle">实时内存监控 · 技能管理 · 技能链调度</div>
+      <div class="subtitle">实时内存监控 · 技能管理 · 技能链调度 · 摄像头标定</div>
     </div>
   </div>
   <div class="status-pill" id="statusPill">
@@ -918,7 +1006,7 @@
   </section>
 
   <!-- ============ 内存写入 / 操作 ============ -->
-  <section class="panel span-2">
+  <section class="panel">
     <div class="panel-head">
       <div class="panel-title">
         <span class="icon" style="background:rgba(210,153,34,.15);color:#e3b341">W</span>
@@ -990,6 +1078,77 @@
     </div>
   </section>
 
+  <!-- ============ 摄像头标定 ============ -->
+  <section class="panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <span class="icon" style="background:rgba(124,92,255,.15);color:#b9a8ff">📷</span>
+        <span>摄像头标定</span>
+      </div>
+      <div class="head-actions">
+        <span id="calibStateBadge" class="calib-badge idle">未开始</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <!-- 配置编辑区（7 项：path / cols / rows / distance / matrixName / coeffsName / commonConfigPath） -->
+      <div class="calib-grid">
+        <div class="field">
+          <label for="calibPath">标定图片路径</label>
+          <input type="text" id="calibPath" placeholder="例如 calibrate/camera">
+        </div>
+        <div class="field">
+          <label for="calibCols">标定板列数</label>
+          <input type="number" id="calibCols" min="2" step="1" placeholder="例如 11">
+        </div>
+        <div class="field">
+          <label for="calibRows">标定板行数</label>
+          <input type="number" id="calibRows" min="2" step="1" placeholder="例如 4">
+        </div>
+        <div class="field">
+          <label for="calibDistance">圆心间距 / 方格边长 (mm)</label>
+          <input type="number" id="calibDistance" min="1" step="1" placeholder="例如 20">
+        </div>
+        <div class="field">
+          <label for="calibMatrixName">内参 matrix 键名</label>
+          <input type="text" id="calibMatrixName" placeholder="例如 camera_matrix">
+        </div>
+        <div class="field">
+          <label for="calibCoeffsName">畸变 coeffs 键名</label>
+          <input type="text" id="calibCoeffsName" placeholder="例如 distort_coeffs">
+        </div>
+        <div class="field">
+          <label for="calibCommonConfig">公共配置文件路径</label>
+          <input type="text" id="calibCommonConfig" placeholder="例如 config.yaml">
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn" id="btnCalibSave">
+          <span class="spinner"></span>
+          <span class="label">保存配置</span>
+        </button>
+        <button class="btn primary" id="btnCalibStart">
+          <span class="spinner"></span>
+          <span class="label">开始标定</span>
+        </button>
+        <button class="btn" id="btnCalibOpenFolder">
+          <span class="spinner"></span>
+          <span class="label">打开文件夹</span>
+        </button>
+        <button class="btn" id="btnCalibRefresh">
+          <span class="spinner"></span>
+          <span class="label">刷新配置</span>
+        </button>
+      </div>
+
+      <div class="calib-progress" id="calibProgress"></div>
+
+      <!-- 标定结果输出 -->
+      <div class="calib-result" id="calibResult">尚未开始标定</div>
+    </div>
+  </section>
+
 </main>
 
 <div id="toast"></div>
@@ -1010,6 +1169,12 @@ const API_CHAIN_UPDATE  = "/api/UpdateSkillChain";   // 整体保存技能链
 const API_CHAIN_START   = "/api/StartSkillChain";    // 启动技能链
 const API_CHAIN_STOP    = "/api/StopSkillChain";     // 停止技能链
 const API_RUN_STATUS    = "/api/GetRunStatus";       // 运行状态
+
+const API_CALIB_GET    = "/api/GetCalibrateConfig";  // 读取标定配置
+const API_CALIB_SET    = "/api/SetCalibrateConfig";  // 保存标定配置
+const API_CALIB_START  = "/api/StartCalibrate";      // 异步启动标定
+const API_CALIB_STATUS = "/api/GetCalibrateStatus";  // 轮询标定状态
+const API_CALIB_OPEN_FOLDER = "/api/OpenCalibrateFolder";  // 打开标定文件夹
 
 const MEM_INTERVAL   = 500;    // 内存轮询
 const RUN_INTERVAL   = 1000;   // 运行状态轮询
@@ -1064,6 +1229,21 @@ const btnDelName  = document.getElementById("btnDelName");
 const delPrefixEl = document.getElementById("delPrefix");
 const btnDelPrefix= document.getElementById("btnDelPrefix");
 const setResultEl = document.getElementById("setResult");
+
+const calibPathEl       = document.getElementById("calibPath");
+const calibColsEl       = document.getElementById("calibCols");
+const calibRowsEl       = document.getElementById("calibRows");
+const calibDistanceEl   = document.getElementById("calibDistance");
+const calibMatrixNameEl = document.getElementById("calibMatrixName");
+const calibCoeffsNameEl = document.getElementById("calibCoeffsName");
+const calibCommonCfgEl  = document.getElementById("calibCommonConfig");
+
+const btnCalibSave      = document.getElementById("btnCalibSave");
+const btnCalibStart     = document.getElementById("btnCalibStart");
+const btnCalibRefresh   = document.getElementById("btnCalibRefresh");
+const calibStateBadge   = document.getElementById("calibStateBadge");
+const calibProgress     = document.getElementById("calibProgress");
+const calibResultEl     = document.getElementById("calibResult");
 
 // ============================================================
 // 工具函数
@@ -1185,7 +1365,6 @@ function toArrValue(raw) {
     });
 }
 
-// 统一 GET（JSON）
 // 取响应体（不管 HTTP 状态码），失败返回 null
 async function readBody(res) {
   try { return await res.json(); } catch (e) { return null; }
@@ -1247,16 +1426,12 @@ async function withLoading(btn, fn) {
 // ============================================================
 // 面板一：内存实时监控
 // ============================================================
-// 结构签名：只含「名称|类型」，按服务端返回顺序拼接。
-// 不含 size / value / degraded —— 这些属于「可变数据」，
-// 变化时只原地更新单元格，绝不重建整表（否则动画会一直重放）。
 let memRowSig    = "";
-let memValEls    = [];           // 与行同序的值单元格
-let memSizeEls   = [];           // 与行同序的大小单元格
-let memKnownNames = new Set();   // 上一轮出现过的行名（用于判断"新增行"）
-let memDegraded  = false;        // 是否降级为 GetMemory
+let memValEls    = [];
+let memSizeEls   = [];
+let memKnownNames = new Set();
+let memDegraded  = false;
 
-// 是否可发起请求（页面隐藏时跳过轮询）
 function canPoll() {
   return !document.hidden;
 }
@@ -1265,7 +1440,7 @@ function setValCell(el, v) {
   if (!el) return;
   const full = (v === undefined) ? "-" : valueToText(v);
   el.textContent = truncate(full, 120);
-  el.title = full;              // hover 显示完整内容
+  el.title = full;
 }
 
 function renderMemory(list, degraded) {
@@ -1273,13 +1448,11 @@ function renderMemory(list, degraded) {
 
   setCount(memCount, list.length);
 
-  // 结构签名：只关心「有哪些行、什么类型、什么顺序」
   const rowSig = list
     .map(x => `${(x && x.name)}|${(x && x.type)}`)
     .join(";");
 
   if (rowSig === memRowSig) {
-    // 结构未变：只原地刷新「大小」和「值」两列，避免重建 DOM
     for (let i = 0; i < list.length; i++) {
       const item = list[i] || {};
       const sizeEl = memSizeEls[i];
@@ -1289,7 +1462,6 @@ function renderMemory(list, degraded) {
     return;
   }
 
-  // 结构变化：重建整表
   memRowSig = rowSig;
   memValEls = [];
   memSizeEls = [];
@@ -1311,7 +1483,6 @@ function renderMemory(list, degraded) {
     nextNames.add(name);
 
     const tr = document.createElement("tr");
-    // 只有真正新增的行才播放入场动画，避免每次重建全部重放
     if (!memKnownNames.has(name)) {
       tr.classList.add("row-enter");
     }
@@ -1347,7 +1518,6 @@ function renderMemory(list, degraded) {
   memBody.replaceChildren(frag);
 }
 
-// 轮询内存：优先 GetMemoryValues，失败降级 GetMemory
 async function pollMemory() {
   if (!canPoll()) return;
 
@@ -1384,7 +1554,7 @@ async function pollMemory() {
 // ============================================================
 // 面板二：技能列表
 // ============================================================
-let skillsCache = [];    // 技能缓存（链编辑器下拉框用）
+let skillsCache = [];
 let lastSkillSig = "";
 
 function renderSkills(list) {
@@ -1434,9 +1604,6 @@ async function loadSkills() {
   }
 }
 
-// 「更新技能」按钮：成功后重新拉技能列表
-// 有技能链在跑时后端会拒绝（400）：这里把服务端的真实原因显示出来，
-// 并直接给出「全部停止后重试」的一步操作，不用让用户自己去找停止按钮
 btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
   try {
     const data = assertOk(await apiGet(API_SKILLS_UPDATE), "更新技能失败");
@@ -1447,7 +1614,6 @@ btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
     const n = (data && data.skills_size != null) ? data.skills_size : skillsCache.length;
     toast("技能已更新，共 " + n + " 个", "ok");
   } catch (e) {
-    // 正在运行导致被拒：服务端 err.data.running 是运行中的链数量
     const running = (e && e.data && e.data.running) ? Number(e.data.running) : 0;
 
     if (running > 0) {
@@ -1460,7 +1626,7 @@ btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
         return;
       }
 
-      await apiPost(API_CHAIN_STOP, { all: true });   // 先全部停止
+      await apiPost(API_CHAIN_STOP, { all: true });
       await pollRunStatus();
 
       const data = assertOk(await apiGet(API_SKILLS_UPDATE), "更新技能失败");
@@ -1472,25 +1638,22 @@ btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
       return;
     }
 
-    // 其它失败：直接把服务端 message 抛给 withLoading 去 toast
     throw e;
   }
 }));
 
 // ============================================================
-// 面板三：技能链管理（链式图形 UI：链带 + 节点 + 连接线 + 端子）
+// 面板三：技能链管理（链式图形 UI）
 // ============================================================
-let chains = [];               // 全部链（完整数组，整体提交用）
-let runStatus = {};            // name -> 运行状态对象
-let lastChainSig = "";         // 链配置签名，变了才重建链带
-let editingSkills = [];        // 编辑区里的技能对象数组
-let editingOrigin = null;      // 正在编辑的原链名，null = 新建
-let isEditing = false;         // 编辑态标记：链视图与编辑器用「编辑中 / 浏览」区分
+let chains = [];
+let runStatus = {};
+let lastChainSig = "";
+let editingSkills = [];
+let editingOrigin = null;
+let isEditing = false;
 
-// 拖拽状态（模块级变量，渲染时不会丢失）
-const dragState = { active: false, from: -1, over: -1, place: "" };  // place: before | after | end
+const dragState = { active: false, from: -1, over: -1, place: "" };
 
-// 规范化 skill 对象（提交时保留后端需要的字段）
 function normalizeSkill(s) {
   const o = s || {};
   const out = {
@@ -1504,7 +1667,6 @@ function normalizeSkill(s) {
   return out;
 }
 
-// 把服务端返回的链规范化
 function normalizeChain(c) {
   const o = c || {};
   return {
@@ -1515,7 +1677,6 @@ function normalizeChain(c) {
   };
 }
 
-// 提交时优先使用 /api/GetSkills 返回的完整技能对象（按名字取），取不到才退回链里的对象
 function pickFullSkill(skill) {
   const nm = String((skill && skill.name) || "");
   const found = skillsCache.find(s => String(s.name) === nm);
@@ -1533,25 +1694,19 @@ async function loadChains(notify) {
   }
 }
 
-// ---------- 链带（chain band）：起点端子 → 节点 →（箭头）→ 终点端子 ----------
-
-// 端子是静态结构，动态文本全部走 esc()
 const TERM_START = '<span class="chain-term start"><span class="term-cap"></span><span>起点</span></span>';
 const TERM_END   = '<span class="chain-term end"><span class="term-cap"></span><span>终点</span></span>';
 
-// 链带上的操作按钮（spinner + label 结构与原有一致，配合 withLoading 防重复提交）
 function bandBtn(label, cls, act, name) {
   return '<button class="btn sm' + (cls ? " " + cls : "") + '"' +
     ' data-act="' + esc(act) + '" data-name="' + esc(name) + '">' +
     '<span class="spinner"></span><span class="label">' + esc(label) + "</span></button>";
 }
 
-// 生成一条链带的 HTML：技能名 / 链名 / 版本 / 错误信息一律 esc 转义
 function chainBandHtml(c, i) {
   const mode = (c.mode === "while") ? "while" : "once";
   const ivl  = Number(c.interval) || 0;
 
-  // 节点串：空链给虚线占位节点
   let stripHtml;
   if (!c.list || c.list.length === 0) {
     stripHtml = TERM_START +
@@ -1599,9 +1754,7 @@ function chainBandHtml(c, i) {
     '<div class="chain-strip-wrap"><div class="chain-strip">' + stripHtml + "</div></div>";
 }
 
-// 渲染所有链带（结构不变时只刷新状态，不重建 DOM）
 function renderChains() {
-  // 拖拽过程中绝不重建 DOM，避免打断拖拽
   if (dragState.active) return;
 
   const sig = JSON.stringify(chains.map(c => [
@@ -1636,8 +1789,6 @@ function renderChains() {
   updateChainStatus();
 }
 
-// 用 GetRunStatus 的结果刷新每条链带的状态徽标 / 元信息 / 节点高亮
-// （动态文本一律 textContent 写入，绝不拼接未转义 HTML）
 function updateChainStatus() {
   let runningCount = 0;
 
@@ -1650,12 +1801,9 @@ function updateChainStatus() {
     const isStarting = !!(st && st.starting);
     if (isRunning) runningCount++;
 
-    // 整条链运行中：描边发光 + 连接线流动动画
     band.classList.toggle("running", isRunning);
-    // 正在编辑的链：虚线描边标记
     band.classList.toggle("editing", isEditing && editingOrigin === c.name);
 
-    // 运行状态徽标
     const statEl = band.querySelector('[data-role="run"]');
     if (statEl) {
       statEl.classList.remove("running", "stopped", "starting");
@@ -1671,7 +1819,6 @@ function updateChainStatus() {
       }
     }
 
-    // 技能数 / 已跑轮次 / 当前技能 / 启动与更新时间
     const metaEl = band.querySelector('[data-role="meta"]');
     if (metaEl) {
       const total = (st && st.skill_count != null)
@@ -1689,7 +1836,6 @@ function updateChainStatus() {
       metaEl.textContent = parts.join(" · ");
     }
 
-    // 错误信息（有 error 时红色显示）
     const errEl = band.querySelector('[data-role="err"]');
     if (errEl) {
       const err = (st && st.error) ? String(st.error) : "";
@@ -1697,7 +1843,6 @@ function updateChainStatus() {
       errEl.style.display = err ? "" : "none";
     }
 
-    // 运行中的节点高亮：current 与该节点技能名一致时呼吸发光
     const cur = (isRunning && st && st.current) ? String(st.current) : "";
     band.querySelectorAll(".chain-node").forEach(node => {
       node.classList.toggle("active", cur !== "" && node.dataset.skill === cur);
@@ -1706,10 +1851,9 @@ function updateChainStatus() {
 
   runSummary.textContent = "运行中 " + runningCount + " / 共 " + chains.length + " 条链";
 
-  updateEditorHighlight();   // 编辑区同步高亮（不改动编辑区结构）
+  updateEditorHighlight();
 }
 
-// 编辑区镜像高亮：正在编辑的链处于运行中时，同步高亮对应编辑节点
 function updateEditorHighlight() {
   const st  = (isEditing && editingOrigin) ? runStatus[editingOrigin] : null;
   const cur = (st && st.running && st.current) ? String(st.current) : "";
@@ -1718,7 +1862,6 @@ function updateEditorHighlight() {
   });
 }
 
-// 轮询运行状态（失败静默，避免 toast 刷屏）
 async function pollRunStatus() {
   if (!canPoll()) return;
   try {
@@ -1735,7 +1878,6 @@ async function pollRunStatus() {
   }
 }
 
-// 启动 / 停止单条链
 async function startChain(name) {
   const data = assertOk(await apiPost(API_CHAIN_START, { name: name }), "启动失败");
   toast((data && data.message) ? data.message : ("已启动链 " + name), "ok");
@@ -1747,7 +1889,6 @@ async function stopChain(name) {
   await pollRunStatus();
 }
 
-// 整体提交：必须提交完整数组（含未修改的链）
 async function submitChains(nextArr, okMsg) {
   const body = nextArr.map(c => ({
     name: c.name,
@@ -1759,18 +1900,16 @@ async function submitChains(nextArr, okMsg) {
   const data = assertOk(await apiPost(API_CHAIN_UPDATE, body), "保存技能链失败");
   toast((data && data.message) ? data.message : (okMsg || "技能链已保存"), "ok");
 
-  lastChainSig = "";       // 强制重建
+  lastChainSig = "";
   await loadChains(false);
   await pollRunStatus();
 }
 
-// 删除链：本地剔除后整体提交（返回是否真的删除了）
 function deleteChain(name) {
   if (!confirm("确定删除技能链「" + name + "」吗？")) return Promise.resolve(false);
   return submitChains(chains.filter(c => c.name !== name), "已删除链 " + name).then(() => true);
 }
 
-// 链带上的按钮事件（事件委托）
 chainList.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
@@ -1786,13 +1925,11 @@ chainList.addEventListener("click", (e) => {
   } else if (act === "del") {
     withLoading(btn, async () => {
       const done = await deleteChain(name);
-      // 删除的正好是正在编辑的链 → 退出编辑态
       if (done && editingOrigin === name) resetEditor();
     });
   }
 });
 
-// 全部启动 / 全部停止
 btnStartAll.addEventListener("click", () => withLoading(btnStartAll, async () => {
   const data = assertOk(await apiPost(API_CHAIN_START, { all: true }), "全部启动失败");
   toast((data && data.message) ? data.message : "已启动全部技能链", "ok");
@@ -1806,7 +1943,6 @@ btnStopAll.addEventListener("click", () => withLoading(btnStopAll, async () => {
 
 // ---------- 链编辑器 ----------
 
-// 技能下拉框（保留当前选择）
 function renderSkillOptions() {
   const prev = skillSelect.value;
   const frag = document.createDocumentFragment();
@@ -1828,21 +1964,17 @@ function renderSkillOptions() {
   if (prev && skillsCache.some(s => String(s.name) === prev)) skillSelect.value = prev;
 }
 
-// 进入 / 退出「编辑中」态（编辑态用虚线描边 + 徽标与浏览态区分）
 function markEditing(on) {
   isEditing = !!on;
   if (editorBox) editorBox.classList.toggle("active", isEditing);
   updateChainStatus();
 }
 
-// 编辑区滚动到最右侧（新增节点后可见）
 function scrollEditorToEnd() {
   const wrap = editorSkills.parentElement;
   if (wrap) wrap.scrollLeft = wrap.scrollWidth;
 }
 
-// 渲染编辑区：起点端子 + 可拖拽节点（节点之间自动补箭头连接线）+ 追加落点 + 终点端子
-// 注意：只有编辑操作才会调用本函数；1000ms / 3000ms 轮询不会重排编辑区（不打断拖拽）
 function renderEditorSkills() {
   const nodesHtml = editingSkills.map((s, i) => {
     const nm  = s.name || "(未命名技能)";
@@ -1861,7 +1993,7 @@ function renderEditorSkills() {
           '<button class="btn sm danger" data-act="del" data-idx="' + i + '" title="移除">✕</button>' +
         "</div>" +
       "</div>";
-  }).join('<span class="chain-link"></span>');   // 节点之间自动补连接线（增删 / 排序后实时更新）
+  }).join('<span class="chain-link"></span>');
 
   const tailHtml = editingSkills.length
     ? '<div class="edit-drop-tail">拖到此处追加</div>'
@@ -1871,9 +2003,8 @@ function renderEditorSkills() {
   editorEmpty.style.display = editingSkills.length ? "none" : "";
 }
 
-// ---------- 拖拽排序（HTML5 Drag & Drop） ----------
+// ---------- 拖拽排序 ----------
 
-// 清理插入位置 / 落点的视觉反馈
 function clearDropHint() {
   editorSkills.querySelectorAll(".drop-before, .drop-after, .armed").forEach(n => {
     n.classList.remove("drop-before", "drop-after", "armed");
@@ -1882,7 +2013,6 @@ function clearDropHint() {
   dragState.place = "";
 }
 
-// 结束拖拽：复位全部拖拽状态与样式
 function endDrag() {
   dragState.active = false;
   dragState.from   = -1;
@@ -1892,18 +2022,17 @@ function endDrag() {
   clearDropHint();
 }
 
-// 把 from 位置的节点移动到 over / place 指定的位置；返回是否真的移动了
 function moveEditingNode(from, over, place) {
   if (!Number.isInteger(from) || from < 0 || from >= editingSkills.length) return false;
 
   let to;
   if (place === "end" || !Number.isInteger(over) || over < 0) {
-    to = editingSkills.length;              // 落到链尾
+    to = editingSkills.length;
   } else {
     to = over + (place === "after" ? 1 : 0);
   }
-  if (to > from) to -= 1;                   // 源节点被移除后，后面的索引整体前移
-  if (to === from) return false;            // 位置没有变化
+  if (to > from) to -= 1;
+  if (to === from) return false;
 
   const next = editingSkills.slice();
   const [moved] = next.splice(from, 1);
@@ -1912,7 +2041,6 @@ function moveEditingNode(from, over, place) {
   return true;
 }
 
-// 拖拽开始：记录源索引（状态放在模块级 dragState 里）
 editorSkills.addEventListener("dragstart", (e) => {
   const node = e.target.closest(".edit-node");
   if (!node) return;
@@ -1923,14 +2051,13 @@ editorSkills.addEventListener("dragstart", (e) => {
   dragState.from   = from;
   dragState.over   = -1;
   dragState.place  = "";
-  node.classList.add("dragging");           // 源节点半透明 + 缩小
+  node.classList.add("dragging");
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = "move";
-    try { e.dataTransfer.setData("text/plain", String(from)); } catch (err) { /* 个别环境忽略 */ }
+    try { e.dataTransfer.setData("text/plain", String(from)); } catch (err) { /* 忽略 */ }
   }
 });
 
-// 拖拽经过：必须 preventDefault()，否则不会触发 drop；同时实时高亮插入位置
 editorSkills.addEventListener("dragover", (e) => {
   if (!dragState.active) return;
   e.preventDefault();
@@ -1941,7 +2068,7 @@ editorSkills.addEventListener("dragover", (e) => {
 
   clearDropHint();
 
-  if (tail) {                               // 拖到链尾
+  if (tail) {
     dragState.over  = editingSkills.length;
     dragState.place = "end";
     tail.classList.add("armed");
@@ -1952,7 +2079,6 @@ editorSkills.addEventListener("dragover", (e) => {
   const idx = Number(overNode.dataset.idx);
   if (!Number.isInteger(idx)) return;
 
-  // 以节点中线为界判断插到前面还是后面
   const rect  = overNode.getBoundingClientRect();
   const place = (e.clientX < rect.left + rect.width / 2) ? "before" : "after";
   dragState.over  = idx;
@@ -1960,7 +2086,6 @@ editorSkills.addEventListener("dragover", (e) => {
   overNode.classList.add(place === "before" ? "drop-before" : "drop-after");
 });
 
-// 放下：按高亮位置移动节点并重绘（连接线随之重排）
 editorSkills.addEventListener("drop", (e) => {
   if (!dragState.active) return;
   e.preventDefault();
@@ -1975,15 +2100,13 @@ editorSkills.addEventListener("drop", (e) => {
       toast("节点顺序已更新", "ok");
     }
   } else {
-    renderEditorSkills();                   // 没有明确落点：只清理视觉反馈
+    renderEditorSkills();
   }
   endDrag();
 });
 
-// 拖拽结束 / 取消（拖到容器外也会触发）
 editorSkills.addEventListener("dragend", () => endDrag());
 
-// 节点上移 / 下移 / 移除（兜底操作：触屏、键盘、无障碍）
 editorSkills.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
@@ -2000,11 +2123,10 @@ editorSkills.addEventListener("click", (e) => {
   } else {
     return;
   }
-  markEditing(true);        // 编辑过就算进入编辑态
-  renderEditorSkills();     // 连接线随增删 / 排序实时更新
+  markEditing(true);
+  renderEditorSkills();
 });
 
-// 从下拉框添加技能到链尾
 btnAddSkill.addEventListener("click", () => {
   const name = skillSelect.value;
   if (!name) {
@@ -2023,7 +2145,6 @@ btnAddSkill.addEventListener("click", () => {
   toast("已添加技能 " + name, "ok");
 });
 
-// 把已有链载入编辑区（进入编辑态）
 function loadChainIntoEditor(name) {
   const c = chains.find(x => x.name === name);
   if (!c) {
@@ -2042,7 +2163,6 @@ function loadChainIntoEditor(name) {
   toast("已载入链 " + c.name + " 到编辑区", "ok");
 }
 
-// 取消编辑 / 清空编辑区（回到浏览态）
 function resetEditor() {
   editingOrigin = null;
   chainNameEl.value = "";
@@ -2050,13 +2170,12 @@ function resetEditor() {
   chainIntervalEl.value = "1000";
   editingSkills = [];
   editorTitle.textContent = "新建技能链";
-  dragState.active = false;   // 防拖拽状态残留
+  dragState.active = false;
   markEditing(false);
   renderEditorSkills();
 }
 btnCancelChain.addEventListener("click", resetEditor);
 
-// 保存（新建或修改）后整体提交
 btnSaveChain.addEventListener("click", () => withLoading(btnSaveChain, async () => {
   const name = chainNameEl.value.trim();
   if (!name) throw new Error("请填写链名称");
@@ -2065,23 +2184,21 @@ btnSaveChain.addEventListener("click", () => withLoading(btnSaveChain, async () 
   const interval = Number(chainIntervalEl.value);
   if (!Number.isFinite(interval) || interval < 0) throw new Error("间隔必须是不小于 0 的数字");
 
-  // 校验：不能与其它链重名（编辑自身除外）
   const dup = chains.find(c => c.name === name && c.name !== editingOrigin);
   if (dup) throw new Error("链名已存在：" + name);
 
-  // 校验：空链给出提示（允许保存，后端可接受空链）
   if (editingSkills.length === 0) {
     if (!confirm("链「" + name + "」没有任何技能，仍然保存吗？")) return;
   }
 
   const obj = { name: name, mode: mode, interval: interval, list: editingSkills.map(pickFullSkill) };
-  const next = chains.map(c => ({ ...c, list: c.list.slice() }));  // 浅拷贝，保留未修改的链
+  const next = chains.map(c => ({ ...c, list: c.list.slice() }));
 
   const originIdx = editingOrigin ? next.findIndex(c => c.name === editingOrigin) : -1;
   let okMsg = "已创建链 " + name;
 
   if (originIdx >= 0) {
-    next[originIdx] = obj;                    // 原位置替换（含改名）
+    next[originIdx] = obj;
     okMsg = "已更新链 " + name;
   } else {
     const dupIdx = next.findIndex(c => c.name === name);
@@ -2092,7 +2209,6 @@ btnSaveChain.addEventListener("click", () => withLoading(btnSaveChain, async () 
   await submitChains(next, okMsg);
   resetEditor();
 
-  // 链正在运行时，模式 / 轮间隔要等它停掉重启才会生效，这里明确提示一下
   const rt = runStatus[name];
   if (rt && (rt.running || rt.starting)) {
     toast("链 " + name + " 正在运行：新的模式 / 轮间隔要「停止」后再「启动」才生效", "err");
@@ -2106,7 +2222,6 @@ function showSetResult(text) {
   setResultEl.textContent = text;
 }
 
-// 写内存
 async function doSetMemory(value, label) {
   const key = setKeyEl.value.trim();
   if (!key) throw new Error("请先填写键名");
@@ -2126,7 +2241,6 @@ async function doSetMemory(value, label) {
   await pollMemory();
 }
 
-// 从 textarea 解析 JSON 值
 function parseJsonValue() {
   const text = setValueEl.value.trim();
   if (text === "") throw new Error("值不能为空");
@@ -2137,38 +2251,32 @@ function parseJsonValue() {
   }
 }
 
-// 写入（严格 JSON）
 btnSet.addEventListener("click", () => withLoading(btnSet, async () => {
   const value = parseJsonValue();
   await doSetMemory(value, "JSON");
 }));
 
-// 快捷：写入字符串
 btnSetString.addEventListener("click", () => withLoading(btnSetString, async () => {
   const value = toStrValue(setValueEl.value);
   if (value === "") throw new Error("值不能为空");
   await doSetMemory(value, "字符串");
 }));
 
-// 快捷：写入数字
 btnSetNumber.addEventListener("click", () => withLoading(btnSetNumber, async () => {
   const value = toNumValue(setValueEl.value);
   await doSetMemory(value, "数字");
 }));
 
-// 快捷：写入布尔
 btnSetBool.addEventListener("click", () => withLoading(btnSetBool, async () => {
   const value = toBoolValue(setValueEl.value);
   await doSetMemory(value, "布尔");
 }));
 
-// 快捷：写入数组
 btnSetArray.addEventListener("click", () => withLoading(btnSetArray, async () => {
   const value = toArrValue(setValueEl.value);
   await doSetMemory(value, "数组");
 }));
 
-// 按键名删除
 btnDelName.addEventListener("click", () => withLoading(btnDelName, async () => {
   const names = delNameEl.value.split(/[,，\s]+/).map(s => s.trim()).filter(s => s !== "");
   if (names.length === 0) throw new Error("请先填写要删除的键名");
@@ -2180,7 +2288,6 @@ btnDelName.addEventListener("click", () => withLoading(btnDelName, async () => {
   await pollMemory();
 }));
 
-// 按前缀删除
 btnDelPrefix.addEventListener("click", () => withLoading(btnDelPrefix, async () => {
   const prefix = delPrefixEl.value.trim();
   if (!prefix) throw new Error("请先填写前缀");
@@ -2193,6 +2300,175 @@ btnDelPrefix.addEventListener("click", () => withLoading(btnDelPrefix, async () 
 }));
 
 // ============================================================
+// 面板五：摄像头标定
+// 前端可配 7 项：path / cols / rows / distance / matrixName / coeffsName / commonConfigPath
+// （imageName 与 openCamera 属于内部字段，不再对外暴露）
+// ============================================================
+
+let calibPolling = false;
+
+function fillCalibForm(cfg) {
+  if (!cfg) return;
+  calibPathEl.value       = cfg.path ?? "";
+  calibColsEl.value       = cfg.cols ?? "";
+  calibRowsEl.value       = cfg.rows ?? "";
+  calibDistanceEl.value   = cfg.distance ?? "";
+  calibMatrixNameEl.value = cfg.matrixName ?? "";
+  calibCoeffsNameEl.value = cfg.coeffsName ?? "";
+  calibCommonCfgEl.value  = cfg.commonConfigPath ?? "";
+}
+
+function collectCalibForm() {
+  const body = {};
+  const strFields = [
+    ["path",             calibPathEl.value.trim()],
+    ["matrixName",       calibMatrixNameEl.value.trim()],
+    ["coeffsName",       calibCoeffsNameEl.value.trim()],
+    ["commonConfigPath", calibCommonCfgEl.value.trim()]
+  ];
+  for (const [k, v] of strFields) if (v !== "") body[k] = v;
+
+  const intFields = [
+    ["cols",     calibColsEl.value],
+    ["rows",     calibRowsEl.value],
+    ["distance", calibDistanceEl.value]
+  ];
+  for (const [k, v] of intFields) {
+    if (v === "") continue;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error(k + " 必须是正整数（当前值：" + v + "）");
+    }
+    body[k] = n;
+  }
+
+  return body;
+}
+
+function setCalibBadge(state, text) {
+  calibStateBadge.className = "calib-badge " + (state || "idle");
+  calibStateBadge.textContent = text || state || "未开始";
+}
+
+function setCalibProgress(on) {
+  calibProgress.classList.toggle("show", !!on);
+}
+
+function setCalibResult(text, kind) {
+  calibResultEl.className = "calib-result" + (kind ? " " + kind : "");
+  calibResultEl.textContent = text == null || text === "" ? "—" : String(text);
+}
+
+async function loadCalibConfig(silent) {
+  try {
+    const data = assertOk(await apiGet(API_CALIB_GET), "读取标定配置失败");
+    fillCalibForm(data.config);
+    if (!silent) toast("标定配置已刷新", "ok");
+  } catch (e) {
+    if (!silent) toast("读取标定配置失败：" + e.message, "err");
+  }
+}
+
+btnCalibSave.addEventListener("click", () => withLoading(btnCalibSave, async () => {
+  const body = collectCalibForm();
+  const data = assertOk(await apiPost(API_CALIB_SET, body), "保存标定配置失败");
+  fillCalibForm(data.config);
+  toast("标定配置已保存", "ok");
+}));
+
+btnCalibRefresh.addEventListener("click", () => withLoading(btnCalibRefresh, async () => {
+  await loadCalibConfig(false);
+}));
+
+// 打开标定图片所在文件夹（由后端调用系统文件管理器）
+btnCalibOpenFolder.addEventListener("click", () => withLoading(btnCalibOpenFolder, async () => {
+  // 先保存当前表单里的 path，避免用户改了路径没保存就点，打开的还是旧路径
+  const cfg = collectCalibForm();
+  if (cfg.path) {
+    const setRes = assertOk(await apiPost(API_CALIB_SET, cfg), "保存标定配置失败");
+    fillCalibForm(setRes.config);
+  }
+
+  const data = assertOk(await apiPost(API_CALIB_OPEN_FOLDER, {}), "打开文件夹失败");
+  toast("已打开文件夹: " + (data.path || ""), "ok");
+}));
+
+function startCalibPolling() {
+  if (calibPolling) return;
+  calibPolling = true;
+
+  const tick = async () => {
+    if (!calibPolling) return;
+    try {
+      const st = await apiGet(API_CALIB_STATUS);
+
+      if (st.state === "running") {
+        setCalibBadge("running", "标定中…");
+        setCalibProgress(true);
+        setTimeout(tick, 1000);
+        return;
+      }
+
+      calibPolling = false;
+      setCalibProgress(false);
+
+      if (st.state === "done") {
+        setCalibBadge("done", "成功");
+        setCalibResult(st.result || "标定成功", "ok");
+        toast("标定成功：" + (st.result || ""), "ok");
+      } else if (st.state === "failed") {
+        setCalibBadge("failed", "失败");
+        setCalibResult(st.result || "标定失败", "err");
+        toast("标定失败：" + (st.result || ""), "err");
+      } else {
+        setCalibBadge("idle", "未开始");
+      }
+    } catch (e) {
+      calibPolling = false;
+      setCalibProgress(false);
+      setCalibBadge("failed", "查询失败");
+      setCalibResult("查询标定状态失败：" + e.message, "err");
+    }
+  };
+
+  tick();
+}
+
+btnCalibStart.addEventListener("click", () => withLoading(btnCalibStart, async () => {
+  const cfg = collectCalibForm();
+  const setRes = assertOk(await apiPost(API_CALIB_SET, cfg), "保存标定配置失败");
+  fillCalibForm(setRes.config);
+
+  assertOk(await apiPost(API_CALIB_START, {}), "启动标定失败");
+
+  setCalibBadge("running", "标定中…");
+  setCalibResult("标定已启动，正在处理，请稍候…", "");
+  setCalibProgress(true);
+  toast("标定已启动", "ok");
+
+  startCalibPolling();
+}));
+
+(async function syncCalibOnBoot() {
+  try {
+    const st = await apiGet(API_CALIB_STATUS);
+    if (st.state === "running") {
+      setCalibBadge("running", "标定中…");
+      setCalibProgress(true);
+      startCalibPolling();
+    } else if (st.state === "done") {
+      setCalibBadge("done", "成功");
+      setCalibResult(st.result || "标定成功", "ok");
+    } else if (st.state === "failed") {
+      setCalibBadge("failed", "失败");
+      setCalibResult(st.result || "标定失败", "err");
+    }
+  } catch (e) {
+    /* 静默 */
+  }
+})();
+
+// ============================================================
 // 启动：首屏立即拉一次，然后开启各自轮询
 // ============================================================
 (async function bootstrap() {
@@ -2200,6 +2476,7 @@ btnDelPrefix.addEventListener("click", () => withLoading(btnDelPrefix, async () 
   await loadSkills();
   await loadChains(false);
   await pollRunStatus();
+  await loadCalibConfig(true);
   renderEditorSkills();
 })();
 

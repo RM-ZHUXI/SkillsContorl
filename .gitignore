@@ -7,6 +7,11 @@ lib/
 logs/
 release/
 
+calibrate/camera/*
+!calibrate/camera/.gitkeep
+
+calibrate/handeye*/*
+!calibrate/handeye*/.gitkeep
 
 CMakeCache.txt
 CMakeFiles/
