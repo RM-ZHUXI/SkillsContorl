@@ -17,3 +17,6 @@ window_width : 1280
 
 # 窗口标题（标题里会带本次已显示帧数 #N）
 window_name  : "camera_test · 图像显示"
+
+# 图片保存位置(为了标定直接设置到标定文件夹)
+image_save : "calibrate/camera"

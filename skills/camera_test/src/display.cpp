@@ -1,9 +1,9 @@
 /**
  * @file display.cpp
- * @author 时新博 a17398481273@163.com
+ * @author o_O a17398481273@163.com
  * @brief 图像显示窗口实现（单 GUI 线程、可反复 start/stop）
- * @version 1.4.0
- * @date 2026/10/10
+ * @version 1.5.0
+ * @date 2026/10/14
  */
 
 #include "display.hpp"
@@ -11,6 +11,10 @@
 #include "tools/logger.hpp"
 
 #include <chrono>
+#include <cstdio>
+#include <ctime>
+#include <filesystem>
+#include <system_error>
 
 namespace viewer
 {
@@ -196,6 +200,84 @@ cv::Mat Displayer::makeWaitingImage() const
     return img;
 }
 
+// ============================================================
+// 空格键保存当前帧
+// ============================================================
+
+bool Displayer::saveCurrentFrame()
+{
+    if (cfg_.imageSave.empty())
+    {
+        sc::tools::logger()->warn("[camera_test] 未配置 image_save，无法保存画面");
+        return false;
+    }
+
+    if (lastShownFrame_.empty())
+    {
+        sc::tools::logger()->warn("[camera_test] 当前没有可保存的画面");
+        return false;
+    }
+
+    try
+    {
+        // 确保保存目录存在（多级一起建）
+        std::error_code ec;
+        std::filesystem::create_directories(cfg_.imageSave, ec);
+        if (ec)
+        {
+            sc::tools::logger()->warn("[camera_test] 创建保存目录失败: {} ({})",
+                                      cfg_.imageSave, ec.message());
+            return false;
+        }
+
+        // 时间戳文件名：yyyymmdd_HHMMSS_mmm.jpg
+        const auto now = std::chrono::system_clock::now();
+        const auto t   = std::chrono::system_clock::to_time_t(now);
+        const auto ms  = static_cast<int>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                now.time_since_epoch()).count() % 1000);
+
+        std::tm tm{};
+    #if defined(_WIN32)
+        localtime_s(&tm, &t);
+    #else
+        localtime_r(&t, &tm);
+    #endif
+
+        char name[64];
+        std::snprintf(name, sizeof(name),
+                      "%04d%02d%02d_%02d%02d%02d_%03d.jpg",
+                      tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                      tm.tm_hour, tm.tm_min, tm.tm_sec,
+                      ms);
+
+        const std::filesystem::path out =
+            std::filesystem::path(cfg_.imageSave) / name;
+
+        if (!cv::imwrite(out.string(), lastShownFrame_))
+        {
+            sc::tools::logger()->warn("[camera_test] 保存画面失败: {}", out.string());
+            return false;
+        }
+
+        // 顺手把绝对路径打出来，方便用户确认写到了哪儿
+        std::error_code ec2;
+        const auto abs = std::filesystem::absolute(out, ec2);
+        sc::tools::logger()->info("[camera_test] 已保存画面: {}",
+                                  ec2 ? out.string() : abs.string());
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        sc::tools::logger()->warn("[camera_test] 保存画面异常: {}", e.what());
+        return false;
+    }
+}
+
+// ============================================================
+// GUI 线程
+// ============================================================
+
 void Displayer::windowLoop()
 {
     try
@@ -213,7 +295,8 @@ void Displayer::windowLoop()
 
         while (!shouldExit_.load())
         {
-            // 暂停期间：只 pump 消息，**不做任何 imshow/setWindowTitle**。
+            // 暂停期间：只 pump 消息，**不做任何 imshow/setWindowTitle**，
+            // **也不处理任何按键**（包括空格）。这正是 "end() 之后 GUI 停止工作" 的保证。
             //   收尾阶段那两下 GUI 调用是最容易卡住的：实测只要在暂停时重画一次
             //   （哪怕只是画占位图），窗口线程就会卡在 HighGUI 里出不来，
             //   于是 ~Displayer() 里的等待超时、窗口残留。宁可暂停时画面定住不动。
@@ -238,15 +321,21 @@ void Displayer::windowLoop()
                 cv::imshow(cfg_.windowName, frame);
                 cv::setWindowTitle(cfg_.windowName,
                                    cfg_.windowName + "  #" + std::to_string(frames_.load()));
+                lastShownFrame_ = frame;   // ★ 保留最近显示的帧（供空格键保存）
                 ++frames_;
             }
 
-            // waitKey 既刷新窗口，也用来收按键：ESC / q 只停渲染，不退出线程
+            // waitKey 既刷新窗口，也用来收按键：ESC / q 只停渲染；空格保存当前帧
             const int key = cv::waitKey(15);
             if (key == 27 || key == 'q' || key == 'Q')
             {
                 sc::tools::logger()->info("[camera_test] 收到按键，停止渲染（窗口保留）");
                 windowStop_ = true;
+            }
+            else if (key == ' ')
+            {
+                // ★ 空格键：把当前显示的这一帧保存到磁盘
+                saveCurrentFrame();
             }
         }
     }

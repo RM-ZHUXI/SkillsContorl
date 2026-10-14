@@ -1,7 +1,7 @@
 {
     "name" : "camera_test",
-    "description" : "图像展示：把公共内存里的图（默认键 image）开一个本地窗口显示出来，只读不写",
-    "version" : "1.4.0",
+    "description" : "图像展示 : 读取图(默认键 image),适应标定程序,空格保存图片保存到(/calibrate/camera)",
+    "version" : "1.5.0",
     "author" : ["sxb"],
     "url" : "build\\bin\\libCAMERA_TEST"
 }

@@ -1,34 +1,9 @@
 /**
  * @file main.cpp
  * @brief camera_test 技能：把公共内存里的画面**按需开窗显示出来**
- * @author 时新博 a17398481273@163.com
- * @date 2026/10/07
- * @version 1.4.0
- *
- * @par v1.4.0 关键变化
- *      end() 不再销毁 Displayer、不再关窗，只"暂停渲染"。
- *      旧实现每次停止链都关窗 + join 窗口线程，下次启动再新建 Displayer →
- *      在一个**新线程**上重新 namedWindow；OpenCV 的 Win32 HighGUI 后端扛不住这种
- *      反复建/销窗口（实测第 2 次建窗 3.1s 后失败并永久阻塞），
- *      于是 end() 里的 join 永远等不到 → 网页上「停止」按钮卡死、链停不下来。
- *      现在窗口与 GUI 线程在整个 DLL 生命周期里只创建一次，停止链立即可返回。
- *
- * @par 它做什么
- *      - init()：只读配置，不创建 GUI —— 保证 init 永不失败，链一定能启动；
- *      - run() ：按需创建显示（打不开只 log 警告，不影响链），然后投递一帧；
- *      - end() ：停显示线程、关窗口、销毁 Displayer，让 GUI 资源在 DLL 卸载前释放。
- *
- * @par 为什么窗口由技能自己起线程
- *      技能链的 run() 跑在工作线程里，跨线程开 GUI（Qt/GTK）会被判为非法甚至
- *      直接 abort，而技能崩了会把宿主进程一起带走。所以所有 GUI 调用都放在
- *      本技能自己创建的显示线程（viewer::Displayer 内部）里。
- *
- * @par v1.3.0 关键变化
- *      窗口创建从 init() 挪到 run()：init 失败 = 链失败，而 GUI 是不可靠的
- *      （可能没 DISPLAY、可能窗口残留），不该绑在链的生死线上。
- *
- * @par 约定
- *      run() 干一次活就返回，绝不死循环；循环交给技能链的 mode=while + interval。
+ * @author o_O a17398481273@163.com
+ * @date 2026/10/14
+ * @version 1.5.0
  */
 
 #include "main.hpp"
@@ -146,6 +121,7 @@ namespace
             cfg.window      = y["window"]       ? y["window"].as<bool>()              : cfg.window;
             cfg.windowWidth = y["window_width"] ? y["window_width"].as<int>()         : cfg.windowWidth;
             cfg.windowName  = y["window_name"]  ? y["window_name"].as<std::string>()  : cfg.windowName;
+            cfg.imageSave   = y["image_save"]   ? y["image_save"].as<std::string>()   : cfg.imageSave;
 
             if (cfg.windowWidth < 0) cfg.windowWidth = 0;     // 0 = 不缩放
         }
@@ -179,8 +155,8 @@ SKILL_API void init(sc::tools::Memory *memory)
     dispResumed = false;
 
     sc::tools::logger()->info("[camera_test] init 完成（窗口将在 run() 里按需创建，"
-                              "key={}, window={}）",
-                              cfg.sourceKey, cfg.window);
+                              "key={}, window={}, save_dir={}）",
+                              cfg.sourceKey, cfg.window, cfg.imageSave);
 }
 
 /**
@@ -233,6 +209,7 @@ SKILL_API void run()
  * @brief 收尾：暂停显示（不关窗、不销毁 Displayer）
  * @note  ★ 只暂停，不销毁 —— 原因见函数体里的说明（反复建/销窗口会让 HighGUI 卡死，
  *        进而导致"停止链"永久阻塞）。
+ *        暂停后 GUI 线程只 pump 消息、不渲染、不响应按键，所以 end() 之后 GUI 停止工作。
  */
 SKILL_API void end()
 {
@@ -249,6 +226,7 @@ SKILL_API void end()
     //   建/销窗口（实测第 2 次建窗会永久阻塞），结果就是"停止链"卡死、再也停不下来。
     //   只暂停渲染即可；真正的关窗与线程回收交给 ~Displayer()（DLL 卸载 / 进程退出）。
 
-    sc::tools::logger()->info("[camera_test] 已暂停显示（累计显示 {} 帧，窗口保留）",
+    sc::tools::logger()->info("[camera_test] 已暂停显示（累计显示 {} 帧，窗口保留；"
+                              "暂停期间空格键不再响应）",
                               disp->frames());
 }
