@@ -53,7 +53,7 @@ struct SkillsChain
  * @note  全局dll管理句柄,仅仅只有loadAll在程序开始前统一注册
  *        skills'name -> LoadSkills
  */
-std::map<std::string,LoadSkills> loadskills;
+inline std::map<std::string,LoadSkills> loadskills;
 
 /**
  * @brief  加载所有dll库

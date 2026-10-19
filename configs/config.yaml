@@ -11,7 +11,7 @@ skillsList_file : "configs/skillsList.json"    # skill链统计文件json
 skills_exclusive: true                         # 同一个技能不允许被两条链同时使用
 
 # funcions配置
-common_configPath : "skills/configs.yaml"       # 默认公共配置文件路径
+common_configPath : "skills/config.yaml"        # 默认公共配置文件路径
 calibrate_camera_path : "calibrate/camera"      # 默认读取/储存标定照片路径
 calibrate_camera_matrix_name : "camera_matrix"  # matrix在公共配置文件中的键名称
 calibrate_camera_coeffs_name : "distort_coeffs" # coeffs在公共配置文件中的键名称

@@ -12,8 +12,8 @@ source_key   : "image"
 #   - 窗口里按 ESC 或 q 可以关掉窗口（技能本身继续跑）。
 window       : true
 
-# 窗口最大显示宽度(px)：画面更宽时等比缩小；0 = 不缩放（原尺寸显示）
-window_width : 1280
+# 窗口最大显示宽度(px)：画面更宽时等比缩小；0 = 不缩放（原尺寸显示）(!!!!在测标定的时候一定要0)
+window_width : 0
 
 # 窗口标题（标题里会带本次已显示帧数 #N）
 window_name  : "camera_test · 图像显示"
