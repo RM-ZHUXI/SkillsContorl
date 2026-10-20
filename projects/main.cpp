@@ -4,25 +4,6 @@
  * @author      时新博 a17398481273@163.com
  * @date        2026-09-09
  * @version     1.0.0
- *
- * @version     1.1.0
- * @par         1. 技能不再在启动时直接跑完，改为交给 RunSkillsLists 线程管理器，
- *                 由网页/接口按技能链的方式启动与停止
- *              2. 接上 Assign（技能链）与 RunSkillsLists（线程管理器）
- *              3. 注册 Ctrl+C 处理，退出时先停技能链再关 http
- *
- * @version     1.2.0
- * @par         1. 技能生命周期以 start/stop 为边界（配合 RunSkillsLists 2.0）：
- *                 每一次「启动技能链」都会对链内技能重新 load + init()，
- *                 每一次「停止技能链」都会调用 end() 并卸载动态库；
- *                 所以「停止 → 再启动」= 设备的完整重新初始化，而不是进程起来只 init 一次。
- *              2. 新增可选参数 --chain=a,b（简写 -c=a,b）：启动后自动把这几条链跑起来，
- *                 用来在没有网页/接口的情况下验证 init/end 与节拍；缺省仍然完全由网页控制。
- *              3. 退出顺序明确成三步：STATUS=false（技能自觉收手）→ stopAll()（每条链都走 end + 卸载）
- *                 → 关 http 服务。
- *              4. 可选配置 skills_exclusive: true —— 同一个技能不允许被两条链同时使用
- *                 （默认 false：多条链共用同一份技能实例，只有第一个使用者 init、
- *                  最后一个使用者 stop 时才 end）。
  */
 
 #include <atomic>
