@@ -1,0 +1,3 @@
+# 云台串口配置
+port: "/dev/ttyACM0"   # Linux下串口设备路径
+baudrate: 115200       # 波特率 

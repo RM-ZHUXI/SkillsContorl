@@ -1,0 +1,7 @@
+{
+    "name" : "gimbal",
+    "description" : "步兵上下位机通讯",
+    "version" : "1.0.0",
+    "author" : ["o_O"],
+    "url" : "build\\bin\\libGIMBAL_SKILL"
+}
