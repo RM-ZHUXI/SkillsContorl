@@ -6,6 +6,9 @@ set(SOURCES
 
 add_library(net SHARED ${SOURCES})
 
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
+
 target_include_directories(net
     PUBLIC
         ${CMAKE_SOURCE_DIR}/include
