@@ -9,10 +9,7 @@
 #ifndef SKILL_HAIKANG_CAMERA_MAIN_HPP
 #define SKILL_HAIKANG_CAMERA_MAIN_HPP
 
-#include "skillscontrol.hpp"     // SKILL_API(extern "C" + dllexport/visibility) + sc::tools::Memory
-
-// 注意：SKILL_API 自带 extern "C"，所以下面不要再套一层 extern "C" { }
-// （套了也能编过，但重复声明容易让人误以为导出是由外层块决定的）
+#include "skillscontrol.hpp"    
 
 /**
  * @brief 技能初始化：定位配置 + 打开相机 + 开始采集

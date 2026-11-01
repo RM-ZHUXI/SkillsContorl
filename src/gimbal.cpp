@@ -19,12 +19,13 @@ Gimbal::Gimbal(const std::string& config_path)
     catch (const std::exception& e)
     {
         sc::tools::logger()->error("[Gimbal] 读取配置文件失败: {}", e.what());
-        return;
+        throw std::runtime_error("[Gimbal] 读取配置文件失败: " + config_path);
     }
 
     if (!openPort())
     {
         sc::tools::logger()->error("[Gimbal] 串口打开失败: {}", port_name_);
+        throw std::runtime_error("[Gimbal] 串口打开失败: " + port_name_);
     }
     else
     {
@@ -43,8 +44,8 @@ bool Gimbal::openPort()
 {
     fd_ = open(port_name_.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
     if (fd_ == -1) return false;
-
-    fcntl(fd_, F_SETFL, 0); // 恢复阻塞模式
+    
+    //cfcntl(fd_, F_SETFL, 0); // 恢复阻塞模式 
 
     struct termios options;
     tcgetattr(fd_, &options);
