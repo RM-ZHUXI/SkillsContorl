@@ -20,7 +20,13 @@
 namespace sc::functions
 {
 
-class CalibrateCamera
+#if defined(_WIN32)
+    #define API __declspec(dllexport)
+#else
+    #define API __attribute__((visibility("default")))
+#endif
+
+class API CalibrateCamera
 {
 private:
     std::string commonConfigPath_;     ///< 公共配置文件路径

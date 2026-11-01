@@ -16,9 +16,8 @@
 #include <cstdlib>
 
 #ifdef _WIN32
-    // 注意顺序：winsock2.h 已在 http_server.hpp 里先包含（也定义了 WIN32_LEAN_AND_MEAN）
     #include <windows.h>
-    #include <shellapi.h>   // WIN32_LEAN_AND_MEAN 会把 shellapi.h 排除掉，这里显式包含以使用 ShellExecuteA
+    #include <shellapi.h>   
 #endif
 
 namespace sc::net

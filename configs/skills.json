@@ -1,5 +1,5 @@
 {
-    "last_query_time": "2026-10-14 17:02:34",
+    "last_query_time": "2026-11-02 00:02:15",
     "skills": [
         {
             "author": [
@@ -7,7 +7,7 @@
             ],
             "description": "图像展示 : 读取图(默认键 image),适应标定程序,空格保存图片保存到(/calibrate/camera)",
             "name": "camera_test",
-            "url": "skills\\camera_test\\build\\bin\\libCAMERA_TEST",
+            "url": "skills/camera_test/build\\bin\\libCAMERA_TEST",
             "version": "1.5.0"
         },
         {
@@ -16,7 +16,7 @@
             ],
             "description": "海康相机采集：MV-CS060-10UC-PRO(USB3) 取流，每轮把一帧写进公共内存的 image 键，不弹窗、不存图",
             "name": "haikang_camera",
-            "url": "skills\\haikang_camera\\build\\bin\\libHAIKANG_CAMERA",
+            "url": "skills/haikang_camera/build\\bin\\libHAIKANG_CAMERA",
             "version": "1.0.5"
         }
     ],

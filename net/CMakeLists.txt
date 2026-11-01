@@ -13,6 +13,7 @@ target_include_directories(net
 
 target_link_libraries(net
     PUBLIC
+        functions  
         fmt::fmt
         spdlog::spdlog
         nlohmann_json::nlohmann_json

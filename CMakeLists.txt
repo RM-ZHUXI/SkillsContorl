@@ -46,9 +46,9 @@ target_include_directories(skillcontorl
 # 链接库
 target_link_libraries(skillcontorl
     PRIVATE
-        tools                
+        tools  
+        functions              
         net
-        functions
         ${OpenCV_LIBS}      
 )
 

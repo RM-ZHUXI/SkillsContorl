@@ -37,7 +37,7 @@
 namespace sc::net
 {
 
-class HttpServer
+class API HttpServer
 {
 public:
     /**

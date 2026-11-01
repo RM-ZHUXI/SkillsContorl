@@ -34,6 +34,13 @@
 namespace sc::net
 {
 
+#if defined(_WIN32)
+    #define API __declspec(dllexport)
+#else
+    #define API __attribute__((visibility("default")))
+#endif
+
+    
 /**
  * @brief HTTP 响应封装，handler 通过它写回响应
  */
@@ -128,7 +135,7 @@ private:
  */
 using HttpHandler = std::function<void(std::string body, HttpHand& httphand)>;
 
-class Http
+class API Http
 {
 public:
     /**
