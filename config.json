@@ -1,0 +1,7 @@
+{
+    "name" : "detect",
+    "description" : "识别器",
+    "version" : "1.0.0",
+    "author" : ["o_O"],
+    "url" : "build\\bin\\libDetect"
+}
