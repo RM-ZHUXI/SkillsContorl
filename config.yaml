@@ -1,4 +1,4 @@
 # 公共配置文件目录
 # 公共配置文件
-comom_config_path : "../config.yaml"
+comom_config_path : "skills/config.yaml"
 

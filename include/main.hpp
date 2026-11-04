@@ -1,6 +1,6 @@
 /**
  * @file main.hpp
- * @brief detect 识别装甲板
+ * @brief detect SKILL管理器适配预测函数
  * @author o_O a17398481273@163.com
  * @date 2026/11/01
  * @version 1.0.0
