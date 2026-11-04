@@ -12,9 +12,6 @@ namespace
 
 }
 
-/**
- * @brief 程序初始化：只读配置，不创建 GUI
- */
 SKILL_API void init(sc::tools::Memory *memory)
 {
     if (memory == nullptr)
