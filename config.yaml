@@ -1,0 +1,39 @@
+# 识别器识别目标
+enemy_color: "red"
+# enemy_color: "blue"
+
+# 是否debug
+debug : true
+
+# 公共配置文件目录
+# 公共配置文件
+comom_config_path : "../config.yaml"
+
+# yolo模式选择
+yolo_name : yolov5
+classify_model: skills/detect/assets/tiny_resnet.onnx
+yolov5_model_path: skills/detect/assets/yolov5.xml
+device: CPU
+min_confidence: 0.8
+use_traditional: true
+
+# ROI
+roi: 
+  x: 420
+  y: 50
+  width: 600
+  height: 600
+
+use_roi: false
+
+#传统方法参数
+threshold: 150
+max_angle_error: 45
+min_lightbar_ratio: 1.5
+max_lightbar_ratio: 20
+min_lightbar_length: 8
+min_armor_ratio: 1
+max_armor_ratio: 5
+max_side_ratio: 1.5
+max_rectangular_error: 25 
+

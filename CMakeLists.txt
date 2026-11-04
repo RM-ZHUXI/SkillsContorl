@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(CAMERA_TEST_SKILL VERSION 1.4.0 LANGUAGES CXX)
+project(DETECT_SKILL VERSION 1.4.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,6 +22,8 @@ find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(OpenVINO REQUIRED)
 
 if(NOT TARGET yaml-cpp::yaml-cpp)
     if(TARGET yaml-cpp)
@@ -50,29 +52,26 @@ foreach(_cand IN LISTS _tools_candidates)
     endif()
 endforeach()
 
-if(NOT TOOLS_LIB)
-    message(FATAL_ERROR
-        "找不到框架库 libtools，请先在顶层工程里构建 tools（cmake --build build），"
-        "或用 -DSKILLCONTROL_TOOLS_LIB=<路径> 指定。已尝试:\n  "
-        "${_tools_candidates}")
-endif()
-message(STATUS "camera_test: libtools = ${TOOLS_LIB}")
-
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/display.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/yolo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/armor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/yolov5.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/detector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/classifier.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/img_tools.cpp
 )
 
-add_library(CAMERA_TEST SHARED ${SOURCES})
+add_library(DETECT SHARED ${SOURCES})
 
-target_include_directories(CAMERA_TEST
+target_include_directories(DETECT
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include   # 技能自己的 include
-        ${SKILLCONTROL_ROOT}/include          # 主工程 include（skillscontrol.hpp / tools/）
+        ${CMAKE_CURRENT_SOURCE_DIR}/include  
+        ${SKILLCONTROL_ROOT}/include         
         ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(CAMERA_TEST
+target_link_libraries(DETECT
     PUBLIC
         ${TOOLS_LIB}
         ${OpenCV_LIBS}
@@ -80,7 +79,9 @@ target_link_libraries(CAMERA_TEST
         spdlog::spdlog
         nlohmann_json::nlohmann_json
         yaml-cpp::yaml-cpp
-        ${CMAKE_DL_LIBS}      # Linux: dladdr —— 用本 .so 自己的位置定位 config.yaml
+        ${CMAKE_DL_LIBS}  
+        Eigen3::Eigen
+        openvino::runtime
 )
 
 # ============================================================
@@ -88,7 +89,8 @@ target_link_libraries(CAMERA_TEST
 # ============================================================
 get_filename_component(TOOLS_LIB_DIR "${TOOLS_LIB}" DIRECTORY)
 
-set_target_properties(CAMERA_TEST PROPERTIES
+set_target_properties(DETECT PROPERTIES
     BUILD_RPATH   "${TOOLS_LIB_DIR};${SKILLCONTROL_ROOT}"
     INSTALL_RPATH "${TOOLS_LIB_DIR};${SKILLCONTROL_ROOT}"
 )
+

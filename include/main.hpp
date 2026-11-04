@@ -4,13 +4,15 @@
  * @author o_O a17398481273@163.com
  * @date 2026/11/01
  * @version 1.0.0
+ * @note 正常使用识别程序需要gimbal(下位机程序)程序
  */
 
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
 #include "tools/memory.hpp"
- 
+#include "yolo.hpp"
+
 #if defined(_WIN32)
     #define SKILL_API extern "C" __declspec(dllexport)
 #else
