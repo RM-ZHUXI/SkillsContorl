@@ -1,0 +1,7 @@
+{
+    "name" : "predict",
+    "description" : "预测器（26赛季同济代码迁移）",
+    "version" : "1.0.0",
+    "author" : ["o_O"],
+    "url" : "build\\bin\\libPREDICT"
+}
