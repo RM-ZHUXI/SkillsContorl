@@ -2,3 +2,15 @@
 # 公共配置文件
 comom_config_path : "skills/config.yaml"
 
+enemy_color: "red"
+# enemy_color: "blue"
+
+#####-----tracker参数-----#####
+min_detect_count: 5
+max_temp_lost_count: 15
+outpost_max_temp_lost_count: 75
+
+#  1  0  0
+#  0  1  0
+#  0  0  1
+R_gimbal2imubody: [1, 0, 0, 0, 1, 0, 0, 0, 1]

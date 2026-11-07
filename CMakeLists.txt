@@ -57,6 +57,9 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/solver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/armor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/math_tools.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/target.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/extended_kalman_filter.cpp
 )
 
 add_library(PREDICT SHARED ${SOURCES})
