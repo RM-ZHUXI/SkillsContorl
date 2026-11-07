@@ -28,6 +28,17 @@ namespace
      * 
      */
     std::chrono::steady_clock::time_point t;
+
+    // time_point 转 long long (微秒)
+    inline long long time_point_to_longlong(std::chrono::steady_clock::time_point tp) {
+        return std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
+    }
+
+    // long long (微秒) 转 time_point
+    inline std::chrono::steady_clock::time_point longlong_to_time_point(int64_t us) {
+        return std::chrono::steady_clock::time_point(std::chrono::microseconds(us));
+    }
+
 }
 
 /**
@@ -69,8 +80,8 @@ SKILL_API void init(sc::tools::Memory *memory)
      */
     mem->insertOrAssign<double>("aim.dyaw", 0.0);
     mem->insertOrAssign<double>("aim.dpitch", 0.0);
-    mem->insertOrAssign<bool>("aim.control", false);
-
+    mem->insertOrAssign<bool>("aim.shoot", false);
+    
     mem->insertOrAssign<double>("gimbal.last_dyaw",0.0);
     mem->insertOrAssign<double>("gimbal.last_dpitch",0.0);
 
@@ -80,7 +91,7 @@ SKILL_API void init(sc::tools::Memory *memory)
     mem->insertOrAssign<float>("gimbal.yaw_deg", 0);
 
     t = std::chrono::steady_clock::now();
-    mem->insertOrAssign<std::chrono::steady_clock::time_point>("gimbal.t",t);
+    mem->insertOrAssign<long long>("gimbal.t",time_point_to_longlong(t));
 
     gimbal = std::make_unique<skill::board::Gimbal>("skills/gimbal/config.yaml");
 }
@@ -123,7 +134,7 @@ SKILL_API void run()
     mem->insertOrAssign<bool>("gimbal.online", gimbal->online());
 
     t = std::chrono::steady_clock::now();
-    mem->insertOrAssign<std::chrono::steady_clock::time_point>("gimbal.t",t);
+    mem->insertOrAssign<long long>("gimbal.t",time_point_to_longlong(t));
 
     /**
      * @brief debug
@@ -158,7 +169,7 @@ SKILL_API void run()
      */
     double dyaw = mem->get<double>("aim.dyaw");
     double dpitch = mem->get<double>("aim.dpitch");
-    double control = mem->get<bool>("aim.control");
+    double control = mem->get<bool>("aim.shoot");
     double last_dyaw = mem->get<double>("gimbal.last_dyaw");
     double last_dpitch = mem->get<double>("gimbal.last_dpitch");
 
