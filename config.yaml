@@ -1,0 +1,29 @@
+# 识别器识别目标
+enemy_color: "red"
+# enemy_color: "blue"
+
+# 公共配置文件
+comom_config_path : "skills/config.yaml"
+
+# 是否debug
+debug : true
+
+# aimer参数
+yaw_offset: 2 # degree -2.5
+pitch_offset: 6.5 # degree 2
+comming_angle: 55 # degree
+leaving_angle: 20 # degree
+decision_speed: 7 # rad/s
+high_speed_delay_time: 0.0 # s
+low_speed_delay_time: 0.0 # s planner use this value
+
+# shooter参数
+first_tolerance: 3    # 近距离射击容差，degree
+second_tolerance: 2   # 远距离射击容差，degree
+judge_distance: 2     #距离判断阈值
+auto_fire: true       # 是否由自瞄控制射击
+
+#  1  0  0
+#  0  1  0
+#  0  0  1
+R_gimbal2imubody: [1, 0, 0, 0, 1, 0, 0, 0, 1]

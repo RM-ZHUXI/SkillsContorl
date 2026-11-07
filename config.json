@@ -1,0 +1,7 @@
+{
+    "name" : "decision_26",
+    "description" : "决策器",
+    "version" : "1.0.0",
+    "author" : ["o_O"],
+    "url" : "build\\bin\\libDECISION"
+}
