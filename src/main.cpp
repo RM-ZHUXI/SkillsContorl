@@ -22,6 +22,12 @@ namespace
      *        每次「停止技能链」end() 会 stop + release，所以停→再启动 = 设备重新初始化。
      */
     std::unique_ptr<skill::board::Gimbal> gimbal;
+
+    /**
+     * @brief 获取时间戳
+     * 
+     */
+    std::chrono::steady_clock::time_point t;
 }
 
 /**
@@ -73,6 +79,9 @@ SKILL_API void init(sc::tools::Memory *memory)
     mem->insertOrAssign<float>("gimbal.pitch_deg", 0);     
     mem->insertOrAssign<float>("gimbal.yaw_deg", 0);
 
+    t = std::chrono::steady_clock::now();
+    mem->insertOrAssign<std::chrono::steady_clock::time_point>("gimbal.t",t);
+
     gimbal = std::make_unique<skill::board::Gimbal>("skills/gimbal/config.yaml");
 }
 
@@ -112,6 +121,9 @@ SKILL_API void run()
     mem->insertOrAssign<float>("gimbal.speed", pack.speed);
 
     mem->insertOrAssign<bool>("gimbal.online", gimbal->online());
+
+    t = std::chrono::steady_clock::now();
+    mem->insertOrAssign<std::chrono::steady_clock::time_point>("gimbal.t",t);
 
     /**
      * @brief debug
