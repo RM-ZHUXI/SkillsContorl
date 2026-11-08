@@ -214,6 +214,7 @@ SKILL_API void run()
      */
     std::chrono::steady_clock::time_point t_now = longlong_to_time_point(mem->get<long long>("gimbal.t"));
     if(t_now <= t)t = std::chrono::steady_clock::now();
+    else t = t_now;
 
     solver->set_R_gimbal2world(q);
 
