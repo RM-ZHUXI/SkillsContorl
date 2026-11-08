@@ -227,6 +227,7 @@ SKILL_API void run()
      */
     std::chrono::steady_clock::time_point t_now = longlong_to_time_point(mem->get<long long>("gimbal.t"));
     if(t_now <= t)t = std::chrono::steady_clock::now();
+    else t = t_now;
 
     solver->set_R_gimbal2world(q);
 
@@ -243,10 +244,13 @@ SKILL_API void run()
     Eigen::Vector3d gimbal_ypr = tools::eulers(solver->R_gimbal2world(), 2, 1, 0);
     double gimbal_yaw   = gimbal_ypr[0];
     double gimbal_pitch = gimbal_ypr[1];
-    double dyaw   = tools::limit_rad(command.yaw   - gimbal_yaw);  
-    double dpitch = command.pitch - gimbal_pitch; 
-    
-    
+    double dyaw   = 0.0;
+    double dpitch = 0.0;
+    if (command.control)
+    {
+        dyaw   = tools::limit_rad(command.yaw   - gimbal_yaw);
+        dpitch = command.pitch - gimbal_pitch;
+    }
     mem->insertOrAssign<double>("aim.dyaw", dyaw);
     mem->insertOrAssign<double>("aim.dpitch", dpitch);
     mem->insertOrAssign<bool>("aim.shoot", false);

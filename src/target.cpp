@@ -168,7 +168,7 @@ void Target::predict(double dt)
 void Target::update(const Armor & armor)
 {
   // 装甲板匹配
-  int id;
+  int id = 0;
   auto min_angle_error = 1e10;
   const std::vector<Eigen::Vector4d> & xyza_list = armor_xyza_list();
 
@@ -186,7 +186,7 @@ void Target::update(const Armor & armor)
     });
 
   // 取前3个distance最小的装甲板
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3 && i < armor_num_; i++) {
     const auto & xyza = xyza_i_list[i].first;
     Eigen::Vector3d ypd = tools::xyz2ypd(xyza.head(3));
     auto angle_error = std::abs(tools::limit_rad(armor.ypr_in_world[0] - xyza[3])) +
@@ -250,6 +250,10 @@ void Target::update_ypda(const Armor & armor, int id)
   Eigen::VectorXd z{{ypd[0], ypd[1], ypd[2], ypr[0]}};  //获得观测量
 
   ekf_.update(z, H, R, h, z_subtract);
+
+  // 约束半径范围，防止漂移
+  ekf_.x[8] = tools::limit_min_max(ekf_.x[8], 0.1, 0.4);
+  ekf_.x[9] = tools::limit_min_max(ekf_.x[9], -0.1, 0.1);
 }
 
 Eigen::VectorXd Target::ekf_x() const { return ekf_.x; }
