@@ -17,14 +17,14 @@
 #include "tools/memory.hpp"
 #include "tools/yaml.hpp"
 
-namespace sc::functions
-{
-
 #if defined(_WIN32)
     #define API __declspec(dllexport)
 #else
     #define API __attribute__((visibility("default")))
 #endif
+
+namespace sc::functions
+{
 
 class API CalibrateCamera
 {
@@ -49,7 +49,8 @@ public:
      * @brief 构造函数
      */
     CalibrateCamera(std::string config);
-
+    CalibrateCamera() = default;
+    
     /**
      * @brief 得到公共配置文件路径
      * @return 返回公共配置文件路径

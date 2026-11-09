@@ -12,9 +12,18 @@ skills_exclusive: true                         # 同一个技能不允许被两�
 
 # funcions配置
 common_configPath : "skills/config.yaml"        # 默认公共配置文件路径
+
 calibrate_camera_path : "calibrate/camera"      # 默认读取/储存标定照片路径
 calibrate_camera_matrix_name : "camera_matrix"  # matrix在公共配置文件中的键名称
 calibrate_camera_coeffs_name : "distort_coeffs" # coeffs在公共配置文件中的键名称
 calibrate_camera_cols: 7                        # 默认标定板行
 calibrate_camera_rows: 7                        # 默认标定板列
 calibrate_camera_center_distance_mm: 35         # 默认标定板距离
+
+calibrate_headeye_path : "calibrate/headeye"                 # 默认读取/储存标定文件路径
+calibrate_headeye_R_gimbal2imubody_name : "R_gimbal2imubody" # R_gimbal2imubody在公共配置文件中的键名称
+calibrate_headeye_R_camera2gimbal_name : "R_camera2gimbal"   # R_camera2gimbal在公共配置文件中的键名称
+calibrate_headeye_t_camera2gimbal_name : "t_camera2gimbal"   # t_camera2gimbal在公共配置文件中的键名称
+calibrate_headeye_cols : 7                                   # 默认标定板行
+calibrate_headeye_rows : 7                                   # 默认标定板列
+calibrate_headeye_distance_mm : 35                           # 默认标定板距离

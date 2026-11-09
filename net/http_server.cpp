@@ -17,7 +17,7 @@
 
 #ifdef _WIN32
     #include <windows.h>
-    #include <shellapi.h>   
+    #include <shellapi.h>
 #endif
 
 namespace sc::net
@@ -63,6 +63,40 @@ std::string mimeType(const std::string& path)
     if (endsWith(".ico"))  return "image/x-icon";
     if (endsWith(".txt"))  return "text/plain; charset=utf-8";
     return "application/octet-stream";
+}
+
+/**
+ * @brief 用系统文件管理器打开绝对路径目录，返回是否成功
+ */
+bool openFolderInSystem(const std::string& abs)
+{
+#ifdef _WIN32
+    HINSTANCE ret = ShellExecuteA(nullptr, "open", abs.c_str(),
+                                  nullptr, nullptr, SW_SHOWNORMAL);
+    return reinterpret_cast<INT_PTR>(ret) > 32;
+#else
+    const std::string cmd = "xdg-open \"" + abs + "\" >/dev/null 2>&1 &";
+    return std::system(cmd.c_str()) == 0;
+#endif
+}
+
+/**
+ * @brief CalibrateHeadEye 的字段打包成 JSON（内部使用）
+ */
+nlohmann::json headeyeConfigToJson(functions::CalibrateHeadEye& c)
+{
+    return {
+        {"commonConfigPath",      c.getCommonConfigPath()},
+        {"path",                  c.getPath()},
+        {"matrixName",            c.getMatrixName()},
+        {"coeffsName",            c.getCoeffsName()},
+        {"R_gimbal2imubodyName",  c.getRGimbal2ImuBodyName()},
+        {"R_camera2gimbalName",   c.getRCamera2GimbalName()},
+        {"t_camera2gimbalName",   c.getTCamera2GimbalName()},
+        {"cols",                  c.getCols()},
+        {"rows",                  c.getRows()},
+        {"distance",              c.getDistance()}
+    };
 }
 
 } // namespace
@@ -227,12 +261,12 @@ void HttpServer::apiGetSkills(std::string body, HttpHand& hand)
 
 void HttpServer::apiUpdateSkills(std::string body, HttpHand& hand)
 {
-    (void)body;   
+    (void)body;
 
     /*
      * 只有"没有任何技能链在运行"时才允许重新扫描技能目录：
      * 运行时技能 DLL 正在被使用，随便改动技能表容易让链里引用的技能失效
-     */ 
+     */
     const std::size_t running = runSkillsLists_.runningCount();
 
     if (running > 0)
@@ -248,7 +282,7 @@ void HttpServer::apiUpdateSkills(std::string body, HttpHand& hand)
     const bool ok = findSkills_.update(true);
 
     if (ok)
-        assign_.update(); 
+        assign_.update();
 
     nlohmann::json result;
     result["status"]      = ok ? "ok" : "error";
@@ -264,7 +298,7 @@ void HttpServer::apiUpdateSkills(std::string body, HttpHand& hand)
 
 namespace
 {
-// 把 CalibrateCamera 的 9 个字段打包成 JSON（本文件内部使用，不对外暴露）
+// 把 CalibrateCamera 的字段打包成 JSON（本文件内部使用，不对外暴露）
 nlohmann::json calibConfigToJson(functions::CalibrateCamera& c)
 {
     return {
@@ -444,18 +478,7 @@ void HttpServer::apiOpenCalibrateFolder(std::string body, HttpHand& hand)
     }
 
     const std::string abs = absPath.string();
-    bool ok = false;
-
-#ifdef _WIN32
-    // explorer 打开文件夹；ShellExecuteA 用 "open" 也行，但 explorer 直接调用更稳
-    const std::string cmd = "explorer \"" + abs + "\"";
-    // std::system 在 Windows 下会弹黑框，用 ShellExecuteA 更干净
-    HINSTANCE ret = ShellExecuteA(nullptr, "open", abs.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-    ok = (reinterpret_cast<INT_PTR>(ret) > 32);
-#else
-    const std::string cmd = "xdg-open \"" + abs + "\" >/dev/null 2>&1 &";
-    ok = (std::system(cmd.c_str()) == 0);
-#endif
+    const bool ok = openFolderInSystem(abs);
 
     if (ok)
     {
@@ -465,6 +488,191 @@ void HttpServer::apiOpenCalibrateFolder(std::string body, HttpHand& hand)
     else
     {
         tools::logger()->warn("[Http] 打开标定文件夹失败: {}", abs);
+        replyJson(hand, { {"status", "error"},
+                          {"message", "打开失败: " + abs} }, 500);
+    }
+}
+
+// ============================================================
+// 内置 API handler：手眼标定
+// ============================================================
+
+void HttpServer::apiGetHeadEyeConfig(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    nlohmann::json j;
+    j["status"] = "ok";
+    j["config"] = headeyeConfigToJson(calibrateheadeye_);
+    replyJson(hand, j);
+}
+
+void HttpServer::apiSetHeadEyeConfig(std::string body, HttpHand& hand)
+{
+    using json = nlohmann::json;
+
+    // 手眼标定运行中不允许改配置，避免线程里读到半新半旧的参数
+    if (headeyeRunning_.load())
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "手眼标定正在运行，暂不能修改配置"} }, 400);
+        return;
+    }
+
+    json req;
+    std::string err;
+    if (!parseBody(body, req, err))
+    {
+        replyJson(hand, { {"status", "error"}, {"message", err} }, 400);
+        return;
+    }
+    if (!req.is_object())
+    {
+        replyJson(hand, { {"status", "error"}, {"message", "body 应为 JSON 对象"} }, 400);
+        return;
+    }
+
+    // 逐字段更新，缺省字段保持原值
+    try
+    {
+        if (req.contains("commonConfigPath") && req["commonConfigPath"].is_string())
+            calibrateheadeye_.setCommonConfigPath(req["commonConfigPath"].get<std::string>());
+        if (req.contains("path") && req["path"].is_string())
+            calibrateheadeye_.setPath(req["path"].get<std::string>());
+        if (req.contains("matrixName") && req["matrixName"].is_string())
+            calibrateheadeye_.setMatrixName(req["matrixName"].get<std::string>());
+        if (req.contains("coeffsName") && req["coeffsName"].is_string())
+            calibrateheadeye_.setCoeffsName(req["coeffsName"].get<std::string>());
+        if (req.contains("R_gimbal2imubodyName") && req["R_gimbal2imubodyName"].is_string())
+            calibrateheadeye_.setRGimbal2ImuBodyName(req["R_gimbal2imubodyName"].get<std::string>());
+        if (req.contains("R_camera2gimbalName") && req["R_camera2gimbalName"].is_string())
+            calibrateheadeye_.setRCamera2GimbalName(req["R_camera2gimbalName"].get<std::string>());
+        if (req.contains("t_camera2gimbalName") && req["t_camera2gimbalName"].is_string())
+            calibrateheadeye_.setTCamera2GimbalName(req["t_camera2gimbalName"].get<std::string>());
+        if (req.contains("cols") && req["cols"].is_number_integer())
+            calibrateheadeye_.setCols(req["cols"].get<int>());
+        if (req.contains("rows") && req["rows"].is_number_integer())
+            calibrateheadeye_.setRows(req["rows"].get<int>());
+        if (req.contains("distance") && req["distance"].is_number_integer())
+            calibrateheadeye_.setDistance(req["distance"].get<int>());
+    }
+    catch (const std::exception& e)
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", std::string("设置失败：") + e.what()} }, 400);
+        return;
+    }
+
+    tools::logger()->info("[Http] 手眼标定配置已更新");
+
+    json j;
+    j["status"] = "ok";
+    j["config"] = headeyeConfigToJson(calibrateheadeye_);   // 回显最新配置
+    replyJson(hand, j);
+}
+
+void HttpServer::apiStartHeadEye(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    // CAS：false -> true，已在跑就直接拒掉
+    bool expected = false;
+    if (!headeyeRunning_.compare_exchange_strong(expected, true))
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "手眼标定正在进行中，请等待完成"} }, 400);
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lk(headeyeMutex_);
+        headeyeState_  = "running";
+        headeyeResult_.clear();
+    }
+
+    tools::logger()->info("[Http] 启动手眼标定线程");
+
+    std::thread([this]() {
+        std::string result;
+        std::string state;
+
+        try
+        {
+            result = calibrateheadeye_.start();     // 同步阻塞，跑完才返回
+            state  = "done";
+        }
+        catch (const std::exception& e)
+        {
+            result = std::string("手眼标定异常: ") + e.what();
+            state  = "failed";
+        }
+        catch (...)
+        {
+            result = "手眼标定异常: 未知错误";
+            state  = "failed";
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(headeyeMutex_);
+            headeyeState_  = state;
+            headeyeResult_ = result;
+        }
+
+        headeyeRunning_.store(false);
+        tools::logger()->info("[Http] 手眼标定线程结束，state={}，result={}", state, result);
+    }).detach();
+
+    replyJson(hand, { {"status", "ok"},
+                      {"message", "手眼标定已启动，请轮询 GetHeadEyeStatus 获取结果"},
+                      {"state", "running"} });
+}
+
+void HttpServer::apiGetHeadEyeStatus(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    nlohmann::json j;
+    {
+        std::lock_guard<std::mutex> lk(headeyeMutex_);
+        j["state"]   = headeyeState_;
+        j["running"] = (headeyeState_ == "running");
+        if (!headeyeResult_.empty())
+            j["result"] = headeyeResult_;
+    }
+    j["status"] = "ok";
+    replyJson(hand, j);
+}
+
+void HttpServer::apiOpenHeadEyeFolder(std::string body, HttpHand& hand)
+{
+    (void)body;
+
+    std::string folder = calibrateheadeye_.getPath();
+    if (folder.empty())
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "手眼标定图片路径为空，请先保存配置"} }, 400);
+        return;
+    }
+
+    std::error_code ec;
+    const std::filesystem::path absPath = std::filesystem::absolute(folder, ec);
+    if (ec || !std::filesystem::exists(absPath, ec) || !std::filesystem::is_directory(absPath, ec))
+    {
+        replyJson(hand, { {"status", "error"},
+                          {"message", "路径不存在或不是目录: " + folder} }, 400);
+        return;
+    }
+
+    const std::string abs = absPath.string();
+    if (openFolderInSystem(abs))
+    {
+        tools::logger()->info("[Http] 已打开手眼标定文件夹: {}", abs);
+        replyJson(hand, { {"status", "ok"}, {"path", abs} });
+    }
+    else
+    {
+        tools::logger()->warn("[Http] 打开手眼标定文件夹失败: {}", abs);
         replyJson(hand, { {"status", "error"},
                           {"message", "打开失败: " + abs} }, 500);
     }
@@ -636,17 +844,21 @@ void HttpServer::apiGetRunStatus(std::string body, HttpHand& hand)
 // 构造 / 析构
 // ============================================================
 
-HttpServer::HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills, tools::Assign &assign,tools::Runskills &runSkillsLists_,functions::CalibrateCamera calibratecamera)
+HttpServer::HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills, tools::Assign &assign,tools::Runskills &runSkillsLists_)
     : findSkills_(findSkills)
     , memory_(memory)
     , assign_(assign)
     , runSkillsLists_(runSkillsLists_)
     , http_(config)
-    , calibratecamera_(calibratecamera)
 {
-    // http_auto_open：启动后要不要自动拉起浏览器（缺省 true，配置里没写就是开）
     try
     {
+        /**
+         * @brief 标定程序配置
+         *
+         */
+        this->calibratecamera_  = sc::functions::CalibrateCamera(config);   // 标定配置
+        this->calibrateheadeye_ = sc::functions::CalibrateHeadEye(config);  // 读取头眼标定配置
         auto yaml = tools::load(config);
         if (yaml["http_auto_open"])
             autoOpen_ = yaml["http_auto_open"].as<bool>();
@@ -686,9 +898,16 @@ void HttpServer::registerAll()
     // ---- 摄像头标定 ----
     registerHandler("/api/GetCalibrateConfig",[this](std::string body, HttpHand& hand){apiGetCalibrateConfig(std::move(body), hand);});
     registerHandler("/api/SetCalibrateConfig",[this](std::string body, HttpHand& hand){apiSetCalibrateConfig(std::move(body), hand);});
-    registerHandler("/api/StartCalibrate",[this](std::string body, HttpHand& hand){apiStartCalibrate(std::move(body), hand);});
+    registerHandler("/api/StartCalibrate",    [this](std::string body, HttpHand& hand){apiStartCalibrate(std::move(body), hand);});
     registerHandler("/api/GetCalibrateStatus",[this](std::string body, HttpHand& hand){apiGetCalibrateStatus(std::move(body), hand);});
     registerHandler("/api/OpenCalibrateFolder",[this](std::string body, HttpHand& hand){apiOpenCalibrateFolder(std::move(body), hand);});
+
+    // ---- 手眼标定 ----
+    registerHandler("/api/GetHeadEyeConfig",  [this](std::string body, HttpHand& hand){apiGetHeadEyeConfig(std::move(body), hand);});
+    registerHandler("/api/SetHeadEyeConfig",  [this](std::string body, HttpHand& hand){apiSetHeadEyeConfig(std::move(body), hand);});
+    registerHandler("/api/StartHeadEye",      [this](std::string body, HttpHand& hand){apiStartHeadEye(std::move(body), hand);});
+    registerHandler("/api/GetHeadEyeStatus",  [this](std::string body, HttpHand& hand){apiGetHeadEyeStatus(std::move(body), hand);});
+    registerHandler("/api/OpenHeadEyeFolder", [this](std::string body, HttpHand& hand){apiOpenHeadEyeFolder(std::move(body), hand);});
 }
 
 void HttpServer::registerHandler(const std::string& path, HttpHandler handler)

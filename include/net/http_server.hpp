@@ -33,6 +33,7 @@
 #include "../tools/tools.hpp"
 #include "net/http.hpp"
 #include "../functions/calibrate_camera.hpp"
+#include "../functions/calibrate_headeye.hpp"
 
 namespace sc::net
 {
@@ -47,10 +48,9 @@ public:
      * @param       findSkills  技能查找器引用
      * @param       assign  技能链管理器引用
      * @param       runSkillsLists_ 链运行管理器引用
-     * @param       calibratecamera 摄像头标定程序
      */
-    HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills, tools::Assign &assign,tools::Runskills &runSkillsLists_,functions::CalibrateCamera calibratecamera);
-    
+    HttpServer(const std::string& config, tools::Memory& memory,tools::FindSkills &findSkills, tools::Assign &assign,tools::Runskills &runSkillsLists_);
+
     ~HttpServer() = default;
 
     HttpServer(const HttpServer&) = delete;
@@ -193,6 +193,33 @@ private:
      */
     void apiOpenCalibrateFolder(std::string body, HttpHand& hand);
 
+    // ---------------- 手眼标定 ----------------
+
+    /**
+     * @brief 内置 API：读取手眼标定配置
+     */
+    void apiGetHeadEyeConfig(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：修改手眼标定配置（只更新传入字段）
+     */
+    void apiSetHeadEyeConfig(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：异步启动手眼标定
+     */
+    void apiStartHeadEye(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：查询手眼标定状态
+     */
+    void apiGetHeadEyeStatus(std::string body, HttpHand& hand);
+
+    /**
+     * @brief 内置 API：打开手眼标定图片文件夹
+     */
+    void apiOpenHeadEyeFolder(std::string body, HttpHand& hand);
+
     // ---------------- 内部工具 ----------------
 
     /**
@@ -219,19 +246,26 @@ private:
     void registerAll();
 
 private:
-    tools::FindSkills&    findSkills_;           ///< 技能查找器引用
-    tools::Memory&        memory_;               ///< 内存管理器引用
-    tools::Assign&        assign_;               ///< 技能链管理器引用
-    tools::Runskills&     runSkillsLists_;       ///< 技能链线程管理器引用(废弃)
-    Http                  http_;                 ///< 底层 http 服务器
-    functions::CalibrateCamera calibratecamera_; ///< 摄像头标定程序
-    bool                  autoOpen_ = true;      ///< 启动后是否自动打开控制台网页
+    tools::FindSkills&    findSkills_;             ///< 技能查找器引用
+    tools::Memory&        memory_;                 ///< 内存管理器引用
+    tools::Assign&        assign_;                 ///< 技能链管理器引用
+    tools::Runskills&     runSkillsLists_;         ///< 技能链线程管理器引用(废弃)
+    Http                  http_;                   ///< 底层 http 服务器
+    functions::CalibrateCamera calibratecamera_;   ///< 摄像头标定程序
+    functions::CalibrateHeadEye calibrateheadeye_; ///< 眼球标定程序
+    bool                  autoOpen_ = true;        ///< 启动后是否自动打开控制台网页
 
     // ---- 标定异步状态 ----
     std::atomic<bool> calibRunning_{false};   ///< 标定线程是否在跑（CAS 互斥用）
     std::mutex        calibMutex_;            ///< 保护 calibState_ / calibResult_
     std::string       calibState_ = "idle";   ///< idle / running / done / failed
     std::string       calibResult_;           ///< 标定结束返回的字符串
+    // ---- 手眼标定异步状态 ----
+    
+    std::atomic<bool> headeyeRunning_{false};   ///< 手眼标定线程是否在跑
+    std::mutex        headeyeMutex_;            ///< 保护 headeyeState_ / headeyeResult_
+    std::string       headeyeState_ = "idle";   ///< idle / running / done / failed
+    std::string       headeyeResult_;           ///< 手眼标定返回的字符串
 };
 
 } // namespace sc::net

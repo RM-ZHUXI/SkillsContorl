@@ -15,7 +15,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 
-#include "net/net.hpp"          // 先包含网络头（内部先引 winsock2.h，避免与 windows.h 顺序告警）
+#include "net/net.hpp"          
 #include "tools/tools.hpp"
 #include "functions/funcions.hpp"
 
@@ -136,11 +136,6 @@ int main(int argc, char * argv[])
         tools::Runskills runskills(timer,&memory,assign);
 
         /**
-         * @brief 注册标定程序
-         */
-        sc::functions::CalibrateCamera calibratecamera(configPath);
-
-        /**
          * @brief 可选：config.yaml 里 skills_exclusive: true 时，同一个技能不允许被两条链同时使用
          * @note  技能的全局变量在 DLL 里，一个 DLL 只有一份；两条链同时跑同一个技能时，
          *        它们的 run() 会并发操作同一份全局对象（比如同一个相机句柄）。
@@ -162,7 +157,7 @@ int main(int argc, char * argv[])
          * @brief web可视化初始端
          * @note  网页通过 /api 下的接口监测公共内存、编辑技能链并启停它们
          */ 
-        sc::net::HttpServer httpServer(configPath, memory, findSkills, assign, runskills,calibratecamera);
+        sc::net::HttpServer httpServer(configPath, memory, findSkills, assign, runskills);
         httpServer.start();
 
         /**

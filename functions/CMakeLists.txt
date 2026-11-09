@@ -1,5 +1,6 @@
 set(SOURCES
     calibrate_camera.cpp
+    calibrate_headeye.cpp
 )
 
 

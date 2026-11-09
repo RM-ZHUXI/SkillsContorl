@@ -10,5 +10,6 @@
 #define FUNCIONS_HPP
 
 #include "calibrate_camera.hpp"
+#include "calibrate_headeye.hpp"
 
 #endif

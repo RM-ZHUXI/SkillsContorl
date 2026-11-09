@@ -1,2 +1,42 @@
-camera_matrix: [1297.9639240052338, 0, 659.8043616119373, 0, 1295.6362537612854, 341.3897317262944, 0, 0, 1]
-distort_coeffs: [-0.061799218100322226, 0.0649935095845547, -0.008499709265247556, 0.0012668101735221501, 0]
+enemy_color: red
+yolo_name: yolov5
+classify_model: assets/tiny_resnet.onnx
+yolo11_model_path: assets/yolo11.xml
+yolov8_model_path: assets/yolov8.xml
+yolov5_model_path: assets/yolov5.xml
+device: CPU
+min_confidence: 0.8
+use_traditional: true
+roi:
+  x: 420
+  y: 50
+  width: 600
+  height: 600
+use_roi: false
+threshold: 150
+max_angle_error: 45
+min_lightbar_ratio: 1.5
+max_lightbar_ratio: 20
+min_lightbar_length: 8
+min_armor_ratio: 1
+max_armor_ratio: 5
+max_side_ratio: 1.5
+max_rectangular_error: 25
+min_detect_count: 5
+max_temp_lost_count: 15
+outpost_max_temp_lost_count: 75
+yaw_offset: 2
+pitch_offset: 6.5
+comming_angle: 55
+leaving_angle: 20
+decision_speed: 7
+high_speed_delay_time: 0.0
+low_speed_delay_time: 0.0
+camera_matrix: [2365.7877538667699, 0, 707.03683048301218, 0, 2368.8107160667646, 579.25632815875065, 0, 0, 1]
+distort_coeffs: [-0.06127231151980244, 0.27217242692023663, -0.00057312276387070358, -2.2263629099078949e-05, 0]
+R_gimbal2imubody: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+R_camera2gimbal: [0.75644290812071868, 0.6525048926101592, 0.045072074210917093, -0.65377837732742849, 0.75634110171345159, 0.022846688994180162, -0.019182285916550249, -0.046749363404082082, 0.99872245240022961]
+t_camera2gimbal: [0.27616236468729372, 0.78192335597367069, 0.1604124545821134]
+pattern_cols: 10
+pattern_rows: 7
+center_distance_mm: 40

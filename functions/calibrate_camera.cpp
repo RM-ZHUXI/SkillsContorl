@@ -10,8 +10,8 @@ CalibrateCamera::CalibrateCamera(std::string config)
     this->path_ = sc::tools::read<std::string>(yaml,"calibrate_camera_path");
     this->matrixName_ = sc::tools::read<std::string>(yaml,"calibrate_camera_matrix_name");
     this->coeffsName_ = sc::tools::read<std::string>(yaml,"calibrate_camera_coeffs_name");
-    this->rows_ = sc::tools::read<int>(yaml,"calibrate_camera_cols");
-    this->cols_ = sc::tools::read<int>(yaml,"calibrate_camera_rows");
+    this->rows_ = sc::tools::read<int>(yaml,"calibrate_camera_rows");
+    this->cols_ = sc::tools::read<int>(yaml,"calibrate_camera_cols");
     this->distance_ = sc::tools::read<int>(yaml,"calibrate_camera_center_distance_mm");
 }
 

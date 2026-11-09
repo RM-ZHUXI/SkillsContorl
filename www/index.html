@@ -23,9 +23,7 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html, body {
-    height: 100%;
-  }
+  html, body { height: 100%; }
 
   body {
     background: var(--bg);
@@ -45,11 +43,7 @@
     flex-wrap: wrap;
   }
 
-  .title {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
+  .title { display: flex; align-items: center; gap: 14px; }
 
   .logo {
     width: 42px; height: 42px;
@@ -65,17 +59,9 @@
     50%      { transform: scale(1.06); box-shadow: 0 10px 28px rgba(124,92,255,.5); }
   }
 
-  h1 {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: .3px;
-  }
+  h1 { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
 
-  .subtitle {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 3px;
-  }
+  .subtitle { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
 
   .status-pill {
     display: inline-flex;
@@ -136,9 +122,7 @@
   .panel:nth-child(4) { animation-delay: .35s; }
   .panel:nth-child(5) { animation-delay: .45s; }
 
-  @keyframes fadeUp {
-    to { opacity: 1; transform: none; }
-  }
+  @keyframes fadeUp { to { opacity: 1; transform: none; } }
 
   .panel-head {
     display: flex;
@@ -173,11 +157,7 @@
   /* ---------- 表格 ---------- */
   .tbl-wrap { overflow-x: auto; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13.5px;
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   thead th {
     text-align: left;
     color: var(--text-dim);
@@ -188,17 +168,10 @@
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
   }
-  tbody td {
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,.03);
-  }
-  tbody tr {
-    transition: background .2s;
-  }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.03); }
+  tbody tr { transition: background .2s; }
   tbody tr:hover { background: rgba(79,156,249,.06); }
-  tbody tr.row-enter {
-    animation: rowIn .35s ease;
-  }
+  tbody tr.row-enter { animation: rowIn .35s ease; }
   @keyframes rowIn {
     from { opacity: 0; transform: translateX(-8px); }
     to   { opacity: 1; transform: none; }
@@ -216,7 +189,6 @@
     border: 1px solid rgba(124,92,255,.25);
   }
 
-  /* ---------- 内存值单元格（长值截断 + hover 显示完整） ---------- */
   td.val-cell { max-width: 340px; }
   .val {
     max-width: 340px;
@@ -342,7 +314,7 @@
     min-height: 16px;
   }
 
-  /* ---------- 技能链：链式图形 UI（链带 = 端子 + 节点 + 连接线） ---------- */
+  /* ---------- 技能链 ---------- */
   .chain {
     position: relative;
     border: 1px solid var(--border);
@@ -353,12 +325,10 @@
     transition: border-color .25s, box-shadow .25s;
   }
   .chain:hover { border-color: rgba(79,156,249,.4); }
-  /* 整条链运行中：链带描边发光 + 连接线流动 */
   .chain.running {
     border-color: rgba(63,185,80,.38);
     box-shadow: 0 0 0 1px rgba(63,185,80,.08), 0 10px 26px rgba(0,0,0,.28);
   }
-  /* 正在编辑的链 */
   .chain.editing { border-style: dashed; border-color: rgba(210,153,34,.5); }
 
   .chain-head {
@@ -369,7 +339,6 @@
   .chain-name { font-size: 15px; font-weight: 700; letter-spacing: .2px; }
   .chain-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-  /* 模式徽标 / 间隔徽标 */
   .mode-badge, .ivl-badge {
     display: inline-block;
     padding: 2px 9px;
@@ -397,9 +366,6 @@
     word-break: break-all;
   }
 
-  /* ---------- 链带：节点 + 连接线 + 起止端子 ---------- */
-
-  /* 容器：窄屏横向滚动，不撑破面板 */
   .chain-strip-wrap {
     margin-top: 12px;
     overflow-x: auto;
@@ -414,7 +380,6 @@
     min-width: 100%;
   }
 
-  /* 技能节点方块 */
   .chain-node {
     flex: 0 0 auto;
     min-width: 118px;
@@ -433,7 +398,6 @@
   }
   .chain-node .node-ver { font-size: 11px; color: var(--text-dim); }
 
-  /* 序号圆标（链视图与编辑器共用） */
   .node-idx {
     flex: 0 0 auto;
     width: 18px; height: 18px;
@@ -446,7 +410,6 @@
     border: 1px solid var(--border);
   }
 
-  /* 当前正在执行的节点：呼吸发光 */
   .chain-node.active {
     border-color: rgba(63,185,80,.75);
     animation: nodeBreath 1.6s ease-in-out infinite;
@@ -459,7 +422,6 @@
     50%      { box-shadow: 0 0 0 2px rgba(63,185,80,.55), 0 0 24px rgba(63,185,80,.5);  transform: translateY(-2px); }
   }
 
-  /* 空链占位节点 */
   .chain-node.placeholder {
     min-width: 220px;
     padding: 16px 14px;
@@ -473,7 +435,6 @@
     text-align: center;
   }
 
-  /* 连接线 + 箭头（纯 CSS 伪元素，无任何外部依赖） */
   .chain-link {
     position: relative;
     flex: 0 0 auto;
@@ -492,7 +453,6 @@
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
   }
-  /* 运行中：连接线流动动画（marching gradient，性能友好） */
   .chain.running .chain-link {
     background-image: repeating-linear-gradient(90deg,
       rgba(79,156,249,.2) 0 6px, rgba(79,156,249,.9) 6px 12px);
@@ -504,7 +464,6 @@
     to   { background-position: 12px 0; }
   }
 
-  /* 起点端子（圆点 + 脉冲）/ 终点端子（方块 + 箭头） */
   .chain-term {
     flex: 0 0 auto;
     display: inline-flex; align-items: center; gap: 6px;
@@ -578,7 +537,7 @@
     background: rgba(210,153,34,.12);
   }
 
-  /* ---------- 链编辑器：可视化编排（拖拽排序） ---------- */
+  /* ---------- 链编辑器 ---------- */
   .editor {
     border: 1px dashed var(--border);
     border-radius: var(--radius);
@@ -586,7 +545,6 @@
     background: rgba(255,255,255,.01);
     transition: border-color .25s, background .25s;
   }
-  /* 处于「编辑中」态 */
   .editor.active {
     border-color: rgba(210,153,34,.5);
     background: rgba(210,153,34,.04);
@@ -600,7 +558,6 @@
   }
   .editor-hint { font-size: 11.5px; font-weight: 400; color: var(--text-dim); }
 
-  /* 编辑画布：横向可滚动 */
   .editor-canvas {
     margin-top: 14px;
     border: 1px solid var(--border);
@@ -621,7 +578,6 @@
     min-height: 74px;
   }
 
-  /* 可拖拽节点 */
   .edit-node {
     position: relative;
     flex: 0 0 auto;
@@ -652,7 +608,6 @@
   .edit-node .edit-node-ver { font-size: 11px; color: var(--text-dim); }
   .edit-node .edit-node-tools { display: flex; gap: 4px; margin-top: 8px; }
   .edit-node .edit-node-tools .btn { padding: 2px 8px; font-size: 11.5px; border-radius: 6px; }
-  /* 编辑区里正在执行的节点同样呼吸发光 */
   .edit-node.active {
     border-style: solid;
     border-color: rgba(63,185,80,.8);
@@ -662,7 +617,6 @@
     color: #0b0e14; background: var(--ok); border-color: transparent; font-weight: 700;
   }
 
-  /* 拖拽插入位置实时高亮 */
   .edit-node.drop-before::before,
   .edit-node.drop-after::after {
     content: "";
@@ -676,7 +630,6 @@
   .edit-node.drop-before::before { left: -8px; }
   .edit-node.drop-after::after   { right: -8px; }
 
-  /* 链尾追加落点（空链时作为占位提示） */
   .edit-drop-tail {
     flex: 0 0 auto;
     display: grid; place-items: center;
@@ -743,23 +696,20 @@
 
   /* ---------- 数字滚动 ---------- */
   .counter { display: inline-block; }
-  .counter.tick {
-    animation: tick .35s ease;
-  }
+  .counter.tick { animation: tick .35s ease; }
   @keyframes tick {
     0%   { transform: scale(1);    color: inherit; }
     40%  { transform: scale(1.25); color: var(--accent); }
     100% { transform: scale(1);    color: inherit; }
   }
 
-  /* ---------- 摄像头标定 ---------- */
+  /* ---------- 标定面板通用样式 ---------- */
   .calib-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
   }
 
-  /* 标定状态徽标 */
   .calib-badge {
     display: inline-block;
     padding: 2px 10px;
@@ -792,7 +742,6 @@
     50%      { box-shadow: 0 0 0 8px rgba(210,153,34,0); }
   }
 
-  /* 标定结果输出框 */
   .calib-result {
     margin-top: 14px;
     padding: 12px 14px;
@@ -810,7 +759,6 @@
   .calib-result.ok    { border-color: rgba(63,185,80,.35);  color: #cbe6cf; }
   .calib-result.err   { border-color: rgba(248,81,73,.35);  color: #ffd5d3; }
 
-  /* 运行中的进度条（indeterminate 动画） */
   .calib-progress {
     margin-top: 12px;
     height: 4px;
@@ -837,6 +785,106 @@
     from { left: -35%; }
     to   { left: 100%; }
   }
+
+  /* ---------- 标定 Tab 切换 ---------- */
+  .tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .tabs .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color .2s, background .2s, box-shadow .2s;
+    white-space: nowrap;
+  }
+  .tabs .tab:hover { color: var(--text); }
+  .tabs .tab.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79,156,249,.35);
+  }
+  .tabs .tab .step {
+    display: inline-grid; place-items: center;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    font-size: 10.5px;
+    background: rgba(255,255,255,.12);
+    color: inherit;
+  }
+  .tabs .tab.active .step {
+    background: rgba(255,255,255,.28);
+    color: #fff;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---------- 标定流程提示条 ---------- */
+  .calib-flow-tip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(210,153,34,.35);
+    background: rgba(210,153,34,.08);
+    color: #f0d38a;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .calib-flow-tip .flow-icon {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(210,153,34,.22);
+    color: #f5c451;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .calib-flow-tip strong { color: #ffe0a0; }
+
+  .calib-flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .calib-flow-steps .step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.04);
+    color: #e6edf3;
+  }
+  .calib-flow-steps .step-pill .num {
+    display: inline-grid; place-items: center;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: rgba(79,156,249,.4);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .calib-flow-steps .arrow { color: var(--text-dim); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -846,7 +894,7 @@
     <div class="logo">S</div>
     <div>
       <h1>Skill Control · 控制台</h1>
-      <div class="subtitle">实时内存监控 · 技能管理 · 技能链调度 · 摄像头标定</div>
+      <div class="subtitle">实时内存监控 · 技能管理 · 技能链调度 · 标定</div>
     </div>
   </div>
   <div class="status-pill" id="statusPill">
@@ -881,9 +929,7 @@
           </thead>
           <tbody id="memBody"></tbody>
         </table>
-        <div class="empty" id="memEmpty" style="display:none">
-          暂无内存数据
-        </div>
+        <div class="empty" id="memEmpty" style="display:none">暂无内存数据</div>
       </div>
     </div>
   </section>
@@ -918,9 +964,7 @@
           </thead>
           <tbody id="skillBody"></tbody>
         </table>
-        <div class="empty" id="skillEmpty" style="display:none">
-          暂无技能
-        </div>
+        <div class="empty" id="skillEmpty" style="display:none">暂无技能</div>
       </div>
     </div>
   </section>
@@ -946,13 +990,10 @@
     </div>
     <div class="panel-body">
       <div id="chainList"></div>
-      <div class="empty" id="chainEmpty" style="display:none">
-        暂无技能链
-      </div>
+      <div class="empty" id="chainEmpty" style="display:none">暂无技能链</div>
 
       <div class="divider"></div>
 
-      <!-- 新建 / 编辑链：可视化编排（拖拽节点排序，连接线实时更新） -->
       <div class="editor" id="editorBox">
         <div class="editor-title">
           <span id="editorTitle">新建技能链</span>
@@ -984,7 +1025,6 @@
           </div>
         </div>
 
-        <!-- 编排画布：起点端子 → 可拖拽节点（带箭头连接线）→ 追加落点 → 终点端子 -->
         <div class="editor-canvas">
           <div class="editor-strip-wrap">
             <div class="editor-strip" id="editorSkills"></div>
@@ -1006,7 +1046,7 @@
   </section>
 
   <!-- ============ 内存写入 / 操作 ============ -->
-  <section class="panel">
+  <section class="panel span-2">
     <div class="panel-head">
       <div class="panel-title">
         <span class="icon" style="background:rgba(210,153,34,.15);color:#e3b341">W</span>
@@ -1027,26 +1067,11 @@
       </div>
 
       <div class="row-actions">
-        <button class="btn primary" id="btnSet">
-          <span class="spinner"></span>
-          <span class="label">写入</span>
-        </button>
-        <button class="btn sm" id="btnSetString">
-          <span class="spinner"></span>
-          <span class="label">写入字符串</span>
-        </button>
-        <button class="btn sm" id="btnSetNumber">
-          <span class="spinner"></span>
-          <span class="label">写入数字</span>
-        </button>
-        <button class="btn sm" id="btnSetBool">
-          <span class="spinner"></span>
-          <span class="label">写入布尔</span>
-        </button>
-        <button class="btn sm" id="btnSetArray">
-          <span class="spinner"></span>
-          <span class="label">写入数组</span>
-        </button>
+        <button class="btn primary" id="btnSet"><span class="spinner"></span><span class="label">写入</span></button>
+        <button class="btn sm" id="btnSetString"><span class="spinner"></span><span class="label">写入字符串</span></button>
+        <button class="btn sm" id="btnSetNumber"><span class="spinner"></span><span class="label">写入数字</span></button>
+        <button class="btn sm" id="btnSetBool"><span class="spinner"></span><span class="label">写入布尔</span></button>
+        <button class="btn sm" id="btnSetArray"><span class="spinner"></span><span class="label">写入数组</span></button>
       </div>
 
       <div class="divider"></div>
@@ -1056,20 +1081,14 @@
           <label for="delName">按键名删除（多个用英文逗号分隔）</label>
           <div class="inline">
             <input type="text" id="delName" placeholder="k1, k2">
-            <button class="btn sm danger" id="btnDelName">
-              <span class="spinner"></span>
-              <span class="label">删除</span>
-            </button>
+            <button class="btn sm danger" id="btnDelName"><span class="spinner"></span><span class="label">删除</span></button>
           </div>
         </div>
         <div class="field">
           <label for="delPrefix">按前缀删除</label>
           <div class="inline">
             <input type="text" id="delPrefix" placeholder="skill.">
-            <button class="btn sm danger" id="btnDelPrefix">
-              <span class="spinner"></span>
-              <span class="label">删除</span>
-            </button>
+            <button class="btn sm danger" id="btnDelPrefix"><span class="spinner"></span><span class="label">删除</span></button>
           </div>
         </div>
       </div>
@@ -1078,74 +1097,162 @@
     </div>
   </section>
 
-  <!-- ============ 摄像头标定 ============ -->
-  <section class="panel">
+  <!-- ============ 标定（摄像头 + 手眼，Tab 切换，一键标定） ============ -->
+  <section class="panel span-2">
     <div class="panel-head">
       <div class="panel-title">
-        <span class="icon" style="background:rgba(124,92,255,.15);color:#b9a8ff">📷</span>
-        <span>摄像头标定</span>
+        <span class="icon" style="background:rgba(79,156,249,.15);color:#4f9cf9">🎯</span>
+        <span>标定</span>
       </div>
       <div class="head-actions">
+        <!-- ⚡ 一键标定：自动执行摄像头标定 → 手眼标定 -->
+        <button class="btn sm primary" id="btnOneClickCalib"
+                title="一键完成：先执行摄像头标定，完成后自动执行手眼标定（顺序不可颠倒）">
+          <span class="spinner"></span>
+          <span class="label">⚡ 一键标定</span>
+        </button>
+        <div class="tabs" id="calibTabs">
+          <button class="tab active" data-tab="camera">
+            <span class="step">1</span>摄像头标定
+          </button>
+          <button class="tab" data-tab="headeye">
+            <span class="step">2</span>手眼标定
+          </button>
+        </div>
+        <!-- 两个状态徽标，随 Tab 切换显示 -->
         <span id="calibStateBadge" class="calib-badge idle">未开始</span>
+        <span id="heStateBadge" class="calib-badge idle" style="display:none">未开始</span>
       </div>
     </div>
     <div class="panel-body">
 
-      <!-- 配置编辑区（7 项：path / cols / rows / distance / matrixName / coeffsName / commonConfigPath） -->
-      <div class="calib-grid">
-        <div class="field">
-          <label for="calibPath">标定图片路径</label>
-          <input type="text" id="calibPath" placeholder="例如 calibrate/camera">
-        </div>
-        <div class="field">
-          <label for="calibCols">标定板列数</label>
-          <input type="number" id="calibCols" min="2" step="1" placeholder="例如 11">
-        </div>
-        <div class="field">
-          <label for="calibRows">标定板行数</label>
-          <input type="number" id="calibRows" min="2" step="1" placeholder="例如 4">
-        </div>
-        <div class="field">
-          <label for="calibDistance">圆心间距 / 方格边长 (mm)</label>
-          <input type="number" id="calibDistance" min="1" step="1" placeholder="例如 20">
-        </div>
-        <div class="field">
-          <label for="calibMatrixName">内参 matrix 键名</label>
-          <input type="text" id="calibMatrixName" placeholder="例如 camera_matrix">
-        </div>
-        <div class="field">
-          <label for="calibCoeffsName">畸变 coeffs 键名</label>
-          <input type="text" id="calibCoeffsName" placeholder="例如 distort_coeffs">
-        </div>
-        <div class="field">
-          <label for="calibCommonConfig">公共配置文件路径</label>
-          <input type="text" id="calibCommonConfig" placeholder="例如 config.yaml">
+      <!-- ===== 全局流程提示 ===== -->
+      <div class="calib-flow-tip">
+        <span class="flow-icon">!</span>
+        <div>
+          <div style="margin-bottom:4px">
+            <strong>标定顺序：先完成「摄像头标定」，再做「手眼标定」。</strong>
+          </div>
+          <div class="calib-flow-steps">
+            <span class="step-pill"><span class="num">1</span>摄像头标定 → 得到内参 <code>camera_matrix</code> 与畸变 <code>distort_coeffs</code></span>
+            <span class="arrow">→</span>
+            <span class="step-pill"><span class="num">2</span>手眼标定 → 依赖步骤 1 的内参，输出 <code>R_camera2gimbal</code> / <code>t_camera2gimbal</code></span>
+          </div>
         </div>
       </div>
 
-      <div class="row-actions">
-        <button class="btn" id="btnCalibSave">
-          <span class="spinner"></span>
-          <span class="label">保存配置</span>
-        </button>
-        <button class="btn primary" id="btnCalibStart">
-          <span class="spinner"></span>
-          <span class="label">开始标定</span>
-        </button>
-        <button class="btn" id="btnCalibOpenFolder">
-          <span class="spinner"></span>
-          <span class="label">打开文件夹</span>
-        </button>
-        <button class="btn" id="btnCalibRefresh">
-          <span class="spinner"></span>
-          <span class="label">刷新配置</span>
-        </button>
+      <!-- ===== Tab: 摄像头标定 ===== -->
+      <div class="tab-panel active" data-tab="camera">
+        <div class="calib-grid">
+          <div class="field">
+            <label for="calibPath">标定图片路径</label>
+            <input type="text" id="calibPath" placeholder="例如 calibrate/camera">
+          </div>
+          <div class="field">
+            <label for="calibCols">标定板列数</label>
+            <input type="number" id="calibCols" min="2" step="1" placeholder="例如 11">
+          </div>
+          <div class="field">
+            <label for="calibRows">标定板行数</label>
+            <input type="number" id="calibRows" min="2" step="1" placeholder="例如 4">
+          </div>
+          <div class="field">
+            <label for="calibDistance">圆心间距 / 方格边长 (mm)</label>
+            <input type="number" id="calibDistance" min="1" step="1" placeholder="例如 20">
+          </div>
+          <div class="field">
+            <label for="calibMatrixName">内参 matrix 键名</label>
+            <input type="text" id="calibMatrixName" placeholder="例如 camera_matrix">
+          </div>
+          <div class="field">
+            <label for="calibCoeffsName">畸变 coeffs 键名</label>
+            <input type="text" id="calibCoeffsName" placeholder="例如 distort_coeffs">
+          </div>
+          <div class="field">
+            <label for="calibCommonConfig">公共配置文件路径</label>
+            <input type="text" id="calibCommonConfig" placeholder="例如 config.yaml">
+          </div>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn" id="btnCalibSave"><span class="spinner"></span><span class="label">保存配置</span></button>
+          <button class="btn primary" id="btnCalibStart"><span class="spinner"></span><span class="label">开始标定</span></button>
+          <button class="btn" id="btnCalibOpenFolder"><span class="spinner"></span><span class="label">打开文件夹</span></button>
+          <button class="btn" id="btnCalibRefresh"><span class="spinner"></span><span class="label">刷新配置</span></button>
+        </div>
+
+        <div class="calib-progress" id="calibProgress"></div>
+        <div class="calib-result" id="calibResult">尚未开始标定</div>
       </div>
 
-      <div class="calib-progress" id="calibProgress"></div>
+      <!-- ===== Tab: 手眼标定 ===== -->
+      <div class="tab-panel" data-tab="headeye">
 
-      <!-- 标定结果输出 -->
-      <div class="calib-result" id="calibResult">尚未开始标定</div>
+        <!-- 手眼 Tab 专属提示 -->
+        <div class="calib-flow-tip" style="border-color:rgba(79,156,249,.4);background:rgba(79,156,249,.08);color:#b8d4ff;">
+          <span class="flow-icon" style="background:rgba(79,156,249,.22);color:#8fc7ff;">i</span>
+          <div>
+            <strong style="color:#cfe2ff;">前置条件：</strong>
+            手眼标定会读取公共配置中的 <code>camera_matrix</code> 和 <code>distort_coeffs</code>，
+            以及 <code>R_gimbal2imubody</code>。
+            <strong style="color:#ffe0a0;">请务必先完成「摄像头标定」并保存结果</strong>，否则标定将因缺少内参而失败。
+          </div>
+        </div>
+
+        <div class="calib-grid">
+          <div class="field">
+            <label for="hePath">标定图片路径（图片 + 同名 txt 四元数）</label>
+            <input type="text" id="hePath" placeholder="例如 calibrate/headeye">
+          </div>
+          <div class="field">
+            <label for="heCommonCfg">公共配置文件路径</label>
+            <input type="text" id="heCommonCfg" placeholder="例如 skills/config.yaml">
+          </div>
+          <div class="field">
+            <label for="heCols">标定板列数（圆心个数）</label>
+            <input type="number" id="heCols" min="2" step="1" placeholder="7">
+          </div>
+          <div class="field">
+            <label for="heRows">标定板行数（圆心个数）</label>
+            <input type="number" id="heRows" min="2" step="1" placeholder="7">
+          </div>
+          <div class="field">
+            <label for="heDistance">圆心间距 (mm)</label>
+            <input type="number" id="heDistance" min="1" step="1" placeholder="35">
+          </div>
+          <div class="field">
+            <label for="heMatrixName">内参 matrix 键名</label>
+            <input type="text" id="heMatrixName" placeholder="camera_matrix">
+          </div>
+          <div class="field">
+            <label for="heCoeffsName">畸变 coeffs 键名</label>
+            <input type="text" id="heCoeffsName" placeholder="distort_coeffs">
+          </div>
+          <div class="field">
+            <label for="heRGimbalName">R_gimbal2imubody 键名</label>
+            <input type="text" id="heRGimbalName" placeholder="R_gimbal2imubody">
+          </div>
+          <div class="field">
+            <label for="heRCameraName">R_camera2gimbal 键名</label>
+            <input type="text" id="heRCameraName" placeholder="R_camera2gimbal">
+          </div>
+          <div class="field">
+            <label for="heTCameraName">t_camera2gimbal 键名</label>
+            <input type="text" id="heTCameraName" placeholder="t_camera2gimbal">
+          </div>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn" id="btnHeadEyeSave"><span class="spinner"></span><span class="label">保存配置</span></button>
+          <button class="btn primary" id="btnHeadEyeStart"><span class="spinner"></span><span class="label">开始标定</span></button>
+          <button class="btn" id="btnHeadEyeOpenFolder"><span class="spinner"></span><span class="label">打开文件夹</span></button>
+          <button class="btn" id="btnHeadEyeRefresh"><span class="spinner"></span><span class="label">刷新配置</span></button>
+        </div>
+
+        <div class="calib-progress" id="heProgress"></div>
+        <div class="calib-result" id="heResult">尚未开始标定</div>
+      </div>
+
     </div>
   </section>
 
@@ -1156,31 +1263,35 @@
 <script>
 // ============================================================
 // 配置：接口路径 + 轮询间隔
-// 注意：后端不支持 URL 查询串，所有参数一律走 POST body
 // ============================================================
-const API_MEM_LIST      = "/api/GetMemory";          // 内存条目（无值）
-const API_MEM_VALUES    = "/api/GetMemoryValues";    // 内存条目（带 value）
-const API_MEM_SET       = "/api/SetMemory";          // 写内存
-const API_MEM_DEL       = "/api/DelMemory";          // 删内存
-const API_SKILLS        = "/api/GetSkills";          // 技能列表
-const API_SKILLS_UPDATE = "/api/UpdateSkills";       // 更新技能
-const API_CHAIN_GET     = "/api/GetSkillChain";      // 读取技能链
-const API_CHAIN_UPDATE  = "/api/UpdateSkillChain";   // 整体保存技能链
-const API_CHAIN_START   = "/api/StartSkillChain";    // 启动技能链
-const API_CHAIN_STOP    = "/api/StopSkillChain";     // 停止技能链
-const API_RUN_STATUS    = "/api/GetRunStatus";       // 运行状态
+const API_MEM_LIST      = "/api/GetMemory";
+const API_MEM_VALUES    = "/api/GetMemoryValues";
+const API_MEM_SET       = "/api/SetMemory";
+const API_MEM_DEL       = "/api/DelMemory";
+const API_SKILLS        = "/api/GetSkills";
+const API_SKILLS_UPDATE = "/api/UpdateSkills";
+const API_CHAIN_GET     = "/api/GetSkillChain";
+const API_CHAIN_UPDATE  = "/api/UpdateSkillChain";
+const API_CHAIN_START   = "/api/StartSkillChain";
+const API_CHAIN_STOP    = "/api/StopSkillChain";
+const API_RUN_STATUS    = "/api/GetRunStatus";
 
-const API_CALIB_GET    = "/api/GetCalibrateConfig";  // 读取标定配置
-const API_CALIB_SET    = "/api/SetCalibrateConfig";  // 保存标定配置
-const API_CALIB_START  = "/api/StartCalibrate";      // 异步启动标定
-const API_CALIB_STATUS = "/api/GetCalibrateStatus";  // 轮询标定状态
-const API_CALIB_OPEN_FOLDER = "/api/OpenCalibrateFolder";  // 打开标定文件夹
+const API_CALIB_GET         = "/api/GetCalibrateConfig";
+const API_CALIB_SET         = "/api/SetCalibrateConfig";
+const API_CALIB_START       = "/api/StartCalibrate";
+const API_CALIB_STATUS      = "/api/GetCalibrateStatus";
+const API_CALIB_OPEN_FOLDER = "/api/OpenCalibrateFolder";
 
-const MEM_INTERVAL   = 500;    // 内存轮询
-const RUN_INTERVAL   = 1000;   // 运行状态轮询
-const CHAIN_INTERVAL = 3000;   // 技能链列表轮询
+const API_HE_GET         = "/api/GetHeadEyeConfig";
+const API_HE_SET         = "/api/SetHeadEyeConfig";
+const API_HE_START       = "/api/StartHeadEye";
+const API_HE_STATUS      = "/api/GetHeadEyeStatus";
+const API_HE_OPEN_FOLDER = "/api/OpenHeadEyeFolder";
 
-// 链模式中文名
+const MEM_INTERVAL   = 500;
+const RUN_INTERVAL   = 1000;
+const CHAIN_INTERVAL = 3000;
+
 const MODE_LABEL = { once: "只跑一次", while: "一直循环" };
 
 // ============================================================
@@ -1205,17 +1316,17 @@ const chainEmpty  = document.getElementById("chainEmpty");
 const btnStartAll = document.getElementById("btnStartAll");
 const btnStopAll  = document.getElementById("btnStopAll");
 
-const editorBox     = document.getElementById("editorBox");
-const editorTitle   = document.getElementById("editorTitle");
-const chainNameEl   = document.getElementById("chainName");
-const chainModeEl   = document.getElementById("chainMode");
+const editorBox       = document.getElementById("editorBox");
+const editorTitle     = document.getElementById("editorTitle");
+const chainNameEl     = document.getElementById("chainName");
+const chainModeEl     = document.getElementById("chainMode");
 const chainIntervalEl = document.getElementById("chainInterval");
-const skillSelect   = document.getElementById("skillSelect");
-const btnAddSkill   = document.getElementById("btnAddSkill");
-const editorSkills  = document.getElementById("editorSkills");
-const editorEmpty   = document.getElementById("editorEmpty");
-const btnSaveChain  = document.getElementById("btnSaveChain");
-const btnCancelChain= document.getElementById("btnCancelChain");
+const skillSelect     = document.getElementById("skillSelect");
+const btnAddSkill     = document.getElementById("btnAddSkill");
+const editorSkills    = document.getElementById("editorSkills");
+const editorEmpty     = document.getElementById("editorEmpty");
+const btnSaveChain    = document.getElementById("btnSaveChain");
+const btnCancelChain  = document.getElementById("btnCancelChain");
 
 const setKeyEl    = document.getElementById("setKey");
 const setValueEl  = document.getElementById("setValue");
@@ -1230,6 +1341,11 @@ const delPrefixEl = document.getElementById("delPrefix");
 const btnDelPrefix= document.getElementById("btnDelPrefix");
 const setResultEl = document.getElementById("setResult");
 
+// 标定 Tab + 一键标定
+const calibTabsEl      = document.getElementById("calibTabs");
+const calibTabPanels   = document.querySelectorAll(".tab-panel");
+const btnOneClickCalib = document.getElementById("btnOneClickCalib");
+
 const calibPathEl       = document.getElementById("calibPath");
 const calibColsEl       = document.getElementById("calibCols");
 const calibRowsEl       = document.getElementById("calibRows");
@@ -1240,16 +1356,34 @@ const calibCommonCfgEl  = document.getElementById("calibCommonConfig");
 
 const btnCalibSave      = document.getElementById("btnCalibSave");
 const btnCalibStart     = document.getElementById("btnCalibStart");
+const btnCalibOpenFolder= document.getElementById("btnCalibOpenFolder");
 const btnCalibRefresh   = document.getElementById("btnCalibRefresh");
 const calibStateBadge   = document.getElementById("calibStateBadge");
 const calibProgress     = document.getElementById("calibProgress");
 const calibResultEl     = document.getElementById("calibResult");
 
+const hePathEl         = document.getElementById("hePath");
+const heCommonCfgEl    = document.getElementById("heCommonCfg");
+const heColsEl         = document.getElementById("heCols");
+const heRowsEl         = document.getElementById("heRows");
+const heDistanceEl     = document.getElementById("heDistance");
+const heMatrixNameEl   = document.getElementById("heMatrixName");
+const heCoeffsNameEl   = document.getElementById("heCoeffsName");
+const heRGimbalNameEl  = document.getElementById("heRGimbalName");
+const heRCameraNameEl  = document.getElementById("heRCameraName");
+const heTCameraNameEl  = document.getElementById("heTCameraName");
+
+const btnHeadEyeSave       = document.getElementById("btnHeadEyeSave");
+const btnHeadEyeStart      = document.getElementById("btnHeadEyeStart");
+const btnHeadEyeOpenFolder = document.getElementById("btnHeadEyeOpenFolder");
+const btnHeadEyeRefresh    = document.getElementById("btnHeadEyeRefresh");
+const heStateBadge         = document.getElementById("heStateBadge");
+const heProgress           = document.getElementById("heProgress");
+const heResultEl           = document.getElementById("heResult");
+
 // ============================================================
 // 工具函数
 // ============================================================
-
-// 安全 HTML 转义（内存 key、技能名、错误信息都可能带 <>&"）
 function esc(s) {
   return String(s)
     .replaceAll("&", "&amp;")
@@ -1258,13 +1392,11 @@ function esc(s) {
     .replaceAll('"', "&quot;");
 }
 
-// 顶部状态灯
 function setStatus(text, kind) {
   statusText.textContent = text;
   statusPill.className = "status-pill" + (kind ? " " + kind : "");
 }
 
-// Toast 提示（用 textContent 写入，避免任何注入）
 function toast(msg, kind = "ok") {
   const box = document.getElementById("toast");
   if (!box) return;
@@ -1282,61 +1414,51 @@ function toast(msg, kind = "ok") {
   }, 2600);
 }
 
-// 数字变化动画
 function setCount(el, value) {
   if (el.textContent === String(value)) return;
   el.textContent = value;
   el.classList.remove("tick");
-  void el.offsetWidth;   // 触发 reflow，重启动画
+  void el.offsetWidth;
   el.classList.add("tick");
 }
 
-// 截断长文本
 function truncate(s, n) {
   const str = String(s);
   return str.length > n ? str.slice(0, n) + "…" : str;
 }
 
-// 任意值 → 可读字符串
 function valueToText(v) {
   if (v === undefined) return "-";
   if (v === null) return "null";
   const t = typeof v;
   if (t === "string") return v;
   if (t === "number" || t === "boolean") return String(v);
-  try {
-    return JSON.stringify(v);
-  } catch (e) {
-    return String(v);
-  }
+  try { return JSON.stringify(v); } catch (e) { return String(v); }
 }
 
-// 字符串 → 字符串（去掉外层 JSON 引号）
 function toStrValue(raw) {
   const t = String(raw).trim();
   if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
     try {
       const p = JSON.parse(t);
       if (typeof p === "string") return p;
-    } catch (e) { /* 保持原样 */ }
+    } catch (e) { }
   }
   return t;
 }
 
-// 字符串 → 数字
 function toNumValue(raw) {
   const t = String(raw).trim();
   if (t === "") throw new Error("值不能为空");
   try {
     const p = JSON.parse(t);
     if (typeof p === "number" && Number.isFinite(p)) return p;
-  } catch (e) { /* 继续按普通数字解析 */ }
+  } catch (e) { }
   const n = Number(t);
   if (!Number.isFinite(n)) throw new Error("不是合法数字：" + t);
   return n;
 }
 
-// 字符串 → 布尔
 function toBoolValue(raw) {
   const t = String(raw).trim().toLowerCase();
   if (["true", "1", "yes", "on", "是"].includes(t)) return true;
@@ -1344,14 +1466,13 @@ function toBoolValue(raw) {
   throw new Error("布尔值请输入 true / false");
 }
 
-// 字符串 → 数组（优先 JSON，否则按逗号切分并逐项尝试 JSON）
 function toArrValue(raw) {
   const t = String(raw).trim();
   if (t === "") throw new Error("数组不能为空");
   try {
     const p = JSON.parse(t);
     if (Array.isArray(p)) return p;
-  } catch (e) { /* 继续按逗号切分 */ }
+  } catch (e) { }
   return t.split(",")
     .map(s => s.trim())
     .filter(s => s !== "")
@@ -1359,19 +1480,14 @@ function toArrValue(raw) {
       try {
         const p = JSON.parse(s);
         return (typeof p === "object" && p !== null) ? s : p;
-      } catch (e) {
-        return s;
-      }
+      } catch (e) { return s; }
     });
 }
 
-// 取响应体（不管 HTTP 状态码），失败返回 null
 async function readBody(res) {
   try { return await res.json(); } catch (e) { return null; }
 }
 
-// 统一 GET。注意：非 2xx 时也要把服务端 JSON 里的 message 带出来，
-// 否则界面只能显示 "HTTP 400" 这种没有信息量的提示
 async function apiGet(path) {
   const res = await fetch(path, { cache: "no-store" });
   const data = await readBody(res);
@@ -1384,7 +1500,6 @@ async function apiGet(path) {
   return data;
 }
 
-// 统一 POST JSON（同样保留服务端的 message / data）
 async function apiPost(path, body) {
   const res = await fetch(path, {
     method: "POST",
@@ -1401,7 +1516,6 @@ async function apiPost(path, body) {
   return data;
 }
 
-// 响应里 status === "error" 时抛错
 function assertOk(data, fallbackMsg) {
   if (data && data.status === "error") {
     throw new Error(data.message || fallbackMsg || "操作失败");
@@ -1409,7 +1523,6 @@ function assertOk(data, fallbackMsg) {
   return data;
 }
 
-// 按钮 loading 包装：统一 try/catch + toast，防重复提交
 async function withLoading(btn, fn) {
   if (!btn) return;
   if (btn.classList.contains("loading")) return;
@@ -1424,6 +1537,32 @@ async function withLoading(btn, fn) {
 }
 
 // ============================================================
+// 标定 Tab 切换
+// ============================================================
+function switchCalibTab(name) {
+  if (calibTabsEl) {
+    calibTabsEl.querySelectorAll(".tab").forEach(t => {
+      t.classList.toggle("active", t.dataset.tab === name);
+    });
+  }
+  calibTabPanels.forEach(p => {
+    p.classList.toggle("active", p.dataset.tab === name);
+  });
+  // 徽标也跟着切
+  const isCamera = (name === "camera");
+  if (calibStateBadge) calibStateBadge.style.display = isCamera ? "" : "none";
+  if (heStateBadge)    heStateBadge.style.display    = isCamera ? "none" : "";
+}
+
+if (calibTabsEl) {
+  calibTabsEl.addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab");
+    if (!tab) return;
+    switchCalibTab(tab.dataset.tab);
+  });
+}
+
+// ============================================================
 // 面板一：内存实时监控
 // ============================================================
 let memRowSig    = "";
@@ -1432,9 +1571,7 @@ let memSizeEls   = [];
 let memKnownNames = new Set();
 let memDegraded  = false;
 
-function canPoll() {
-  return !document.hidden;
-}
+function canPoll() { return !document.hidden; }
 
 function setValCell(el, v) {
   if (!el) return;
@@ -1483,9 +1620,7 @@ function renderMemory(list, degraded) {
     nextNames.add(name);
 
     const tr = document.createElement("tr");
-    if (!memKnownNames.has(name)) {
-      tr.classList.add("row-enter");
-    }
+    if (!memKnownNames.has(name)) tr.classList.add("row-enter");
 
     const tdName = document.createElement("td");
     tdName.className = "name";
@@ -1542,9 +1677,7 @@ async function pollMemory() {
 
   if (degraded !== memDegraded) {
     memDegraded = degraded;
-    memHint.textContent = degraded
-      ? "值接口不可用 · 已降级为 GetMemory"
-      : "每 500ms 刷新";
+    memHint.textContent = degraded ? "值接口不可用 · 已降级为 GetMemory" : "每 500ms 刷新";
   }
 
   renderMemory(list, degraded);
@@ -1559,7 +1692,6 @@ let lastSkillSig = "";
 
 function renderSkills(list) {
   if (!Array.isArray(list)) return;
-
   setCount(skillCount, list.length);
 
   const sig = list.map(s => `${(s && s.name)}|${(s && s.version)}`).join(";");
@@ -1578,7 +1710,6 @@ function renderSkills(list) {
     const item = raw || {};
     const tr = document.createElement("tr");
     tr.classList.add("row-enter");
-
     const desc = item.description ?? "-";
     const url  = item.url ?? "-";
     tr.innerHTML = `
@@ -1607,15 +1738,12 @@ async function loadSkills() {
 btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
   try {
     const data = assertOk(await apiGet(API_SKILLS_UPDATE), "更新技能失败");
-
     await loadSkills();
     await loadChains(false);
-
     const n = (data && data.skills_size != null) ? data.skills_size : skillsCache.length;
     toast("技能已更新，共 " + n + " 个", "ok");
   } catch (e) {
     const running = (e && e.data && e.data.running) ? Number(e.data.running) : 0;
-
     if (running > 0) {
       const ok = confirm(
         "有 " + running + " 条技能链正在运行，重新扫描技能需要先停止它们。\n\n" +
@@ -1625,25 +1753,21 @@ btnUpdate.addEventListener("click", () => withLoading(btnUpdate, async () => {
         toast(e.message || "已取消更新技能", "err");
         return;
       }
-
       await apiPost(API_CHAIN_STOP, { all: true });
       await pollRunStatus();
-
       const data = assertOk(await apiGet(API_SKILLS_UPDATE), "更新技能失败");
       await loadSkills();
       await loadChains(false);
-
       const n = (data && data.skills_size != null) ? data.skills_size : skillsCache.length;
       toast("已停止全部技能链并重新扫描，共 " + n + " 个技能", "ok");
       return;
     }
-
     throw e;
   }
 }));
 
 // ============================================================
-// 面板三：技能链管理（链式图形 UI）
+// 面板三：技能链管理
 // ============================================================
 let chains = [];
 let runStatus = {};
@@ -1709,21 +1833,16 @@ function chainBandHtml(c, i) {
 
   let stripHtml;
   if (!c.list || c.list.length === 0) {
-    stripHtml = TERM_START +
-      '<div class="chain-node placeholder">空链 · 请编辑添加技能</div>' +
-      TERM_END;
+    stripHtml = TERM_START + '<div class="chain-node placeholder">空链 · 请编辑添加技能</div>' + TERM_END;
   } else {
     const nodes = c.list.map((s, k) => {
       const nm  = s.name || "(未命名技能)";
       const ver = s.version ? ("v" + s.version) : "—";
       const tip = nm + (s.description ? " · " + s.description : "");
       return (k > 0 ? '<span class="chain-link" title="执行顺序"></span>' : "") +
-        '<div class="chain-node" data-skill="' + esc(s.name || "") + '"' +
-          ' title="' + esc(tip) + '">' +
-          '<div class="node-top">' +
-            '<span class="node-idx">' + (k + 1) + "</span>" +
-            '<span class="node-name">' + esc(nm) + "</span>" +
-          "</div>" +
+        '<div class="chain-node" data-skill="' + esc(s.name || "") + '" title="' + esc(tip) + '">' +
+          '<div class="node-top"><span class="node-idx">' + (k + 1) + "</span>" +
+          '<span class="node-name">' + esc(nm) + "</span></div>" +
           '<span class="node-ver">' + esc(ver) + "</span>" +
         "</div>";
     }).join("");
@@ -1734,12 +1853,8 @@ function chainBandHtml(c, i) {
     '<div class="chain-head">' +
       '<div class="chain-title">' +
         '<span class="chain-name">' + esc(c.name || "(未命名)") + "</span>" +
-        '<span class="mode-badge ' + mode + '">' +
-          esc(mode + " · " + (MODE_LABEL[mode] || mode)) +
-        "</span>" +
-        '<span class="ivl-badge">' +
-          (ivl > 0 ? ("轮间隔 " + esc(ivl) + " ms") : "轮间隔 不等待（全速）") +
-        "</span>" +
+        '<span class="mode-badge ' + mode + '">' + esc(mode + " · " + (MODE_LABEL[mode] || mode)) + "</span>" +
+        '<span class="ivl-badge">' + (ivl > 0 ? ("轮间隔 " + esc(ivl) + " ms") : "轮间隔 不等待（全速）") + "</span>" +
         '<span class="run-badge stopped" data-role="run">未知</span>' +
       "</div>" +
       '<div class="chain-actions">' +
@@ -1762,10 +1877,7 @@ function renderChains() {
     c.list.map(s => (s.name || "") + "@" + (s.version || ""))
   ]));
 
-  if (sig === lastChainSig) {
-    updateChainStatus();
-    return;
-  }
+  if (sig === lastChainSig) { updateChainStatus(); return; }
   lastChainSig = sig;
 
   if (chains.length === 0) {
@@ -1807,32 +1919,21 @@ function updateChainStatus() {
     const statEl = band.querySelector('[data-role="run"]');
     if (statEl) {
       statEl.classList.remove("running", "stopped", "starting");
-      if (isRunning) {
-        statEl.classList.add("running");
-        statEl.textContent = "运行中";
-      } else if (isStarting) {
-        statEl.classList.add("starting");
-        statEl.textContent = "启动中";
-      } else {
-        statEl.classList.add("stopped");
-        statEl.textContent = "已停止";
-      }
+      if (isRunning) { statEl.classList.add("running"); statEl.textContent = "运行中"; }
+      else if (isStarting) { statEl.classList.add("starting"); statEl.textContent = "启动中"; }
+      else { statEl.classList.add("stopped"); statEl.textContent = "已停止"; }
     }
 
     const metaEl = band.querySelector('[data-role="meta"]');
     if (metaEl) {
-      const total = (st && st.skill_count != null)
-        ? st.skill_count
-        : (c.list ? c.list.length : 0);
+      const total = (st && st.skill_count != null) ? st.skill_count : (c.list ? c.list.length : 0);
       const parts = ["技能 " + total + " 个"];
       if (st) {
         parts.push("已跑轮次 " + ((st.loop != null) ? st.loop : 0));
         parts.push("当前技能 " + (st.current || "-"));
         if (st.start_time)  parts.push("启动 " + st.start_time);
         if (st.update_time) parts.push("更新 " + st.update_time);
-      } else {
-        parts.push("状态未知");
-      }
+      } else { parts.push("状态未知"); }
       metaEl.textContent = parts.join(" · ");
     }
 
@@ -1850,7 +1951,6 @@ function updateChainStatus() {
   });
 
   runSummary.textContent = "运行中 " + runningCount + " / 共 " + chains.length + " 条链";
-
   updateEditorHighlight();
 }
 
@@ -1873,18 +1973,16 @@ async function pollRunStatus() {
     }
     runStatus = map;
     updateChainStatus();
-  } catch (e) {
-    /* 静默 */
-  }
+  } catch (e) { }
 }
 
 async function startChain(name) {
-  const data = assertOk(await apiPost(API_CHAIN_START, { name: name }), "启动失败");
+  const data = assertOk(await apiPost(API_CHAIN_START, { name }), "启动失败");
   toast((data && data.message) ? data.message : ("已启动链 " + name), "ok");
   await pollRunStatus();
 }
 async function stopChain(name) {
-  const data = assertOk(await apiPost(API_CHAIN_STOP, { name: name }), "停止失败");
+  const data = assertOk(await apiPost(API_CHAIN_STOP, { name }), "停止失败");
   toast((data && data.message) ? data.message : ("已停止链 " + name), "ok");
   await pollRunStatus();
 }
@@ -2004,7 +2102,6 @@ function renderEditorSkills() {
 }
 
 // ---------- 拖拽排序 ----------
-
 function clearDropHint() {
   editorSkills.querySelectorAll(".drop-before, .drop-after, .armed").forEach(n => {
     n.classList.remove("drop-before", "drop-after", "armed");
@@ -2024,13 +2121,9 @@ function endDrag() {
 
 function moveEditingNode(from, over, place) {
   if (!Number.isInteger(from) || from < 0 || from >= editingSkills.length) return false;
-
   let to;
-  if (place === "end" || !Number.isInteger(over) || over < 0) {
-    to = editingSkills.length;
-  } else {
-    to = over + (place === "after" ? 1 : 0);
-  }
+  if (place === "end" || !Number.isInteger(over) || over < 0) to = editingSkills.length;
+  else to = over + (place === "after" ? 1 : 0);
   if (to > from) to -= 1;
   if (to === from) return false;
 
@@ -2046,7 +2139,6 @@ editorSkills.addEventListener("dragstart", (e) => {
   if (!node) return;
   const from = Number(node.dataset.idx);
   if (!Number.isInteger(from)) return;
-
   dragState.active = true;
   dragState.from   = from;
   dragState.over   = -1;
@@ -2054,7 +2146,7 @@ editorSkills.addEventListener("dragstart", (e) => {
   node.classList.add("dragging");
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = "move";
-    try { e.dataTransfer.setData("text/plain", String(from)); } catch (err) { /* 忽略 */ }
+    try { e.dataTransfer.setData("text/plain", String(from)); } catch (err) { }
   }
 });
 
@@ -2089,7 +2181,6 @@ editorSkills.addEventListener("dragover", (e) => {
 editorSkills.addEventListener("drop", (e) => {
   if (!dragState.active) return;
   e.preventDefault();
-
   const from  = dragState.from;
   const over  = dragState.over;
   const place = dragState.place;
@@ -2120,24 +2211,16 @@ editorSkills.addEventListener("click", (e) => {
     [editingSkills[idx + 1], editingSkills[idx]] = [editingSkills[idx], editingSkills[idx + 1]];
   } else if (act === "del") {
     editingSkills.splice(idx, 1);
-  } else {
-    return;
-  }
+  } else { return; }
   markEditing(true);
   renderEditorSkills();
 });
 
 btnAddSkill.addEventListener("click", () => {
   const name = skillSelect.value;
-  if (!name) {
-    toast("请先选择技能", "err");
-    return;
-  }
+  if (!name) { toast("请先选择技能", "err"); return; }
   const found = skillsCache.find(s => String(s.name) === name);
-  if (!found) {
-    toast("未找到技能：" + name, "err");
-    return;
-  }
+  if (!found) { toast("未找到技能：" + name, "err"); return; }
   editingSkills.push(normalizeSkill(found));
   markEditing(true);
   renderEditorSkills();
@@ -2147,10 +2230,7 @@ btnAddSkill.addEventListener("click", () => {
 
 function loadChainIntoEditor(name) {
   const c = chains.find(x => x.name === name);
-  if (!c) {
-    toast("未找到技能链：" + name, "err");
-    return;
-  }
+  if (!c) { toast("未找到技能链：" + name, "err"); return; }
   editingOrigin = c.name;
   chainNameEl.value = c.name;
   chainModeEl.value = (c.mode === "while") ? "while" : "once";
@@ -2191,7 +2271,7 @@ btnSaveChain.addEventListener("click", () => withLoading(btnSaveChain, async () 
     if (!confirm("链「" + name + "」没有任何技能，仍然保存吗？")) return;
   }
 
-  const obj = { name: name, mode: mode, interval: interval, list: editingSkills.map(pickFullSkill) };
+  const obj = { name, mode, interval, list: editingSkills.map(pickFullSkill) };
   const next = chains.map(c => ({ ...c, list: c.list.slice() }));
 
   const originIdx = editingOrigin ? next.findIndex(c => c.name === editingOrigin) : -1;
@@ -2218,9 +2298,7 @@ btnSaveChain.addEventListener("click", () => withLoading(btnSaveChain, async () 
 // ============================================================
 // 面板四：内存写入 / 删除
 // ============================================================
-function showSetResult(text) {
-  setResultEl.textContent = text;
-}
+function showSetResult(text) { setResultEl.textContent = text; }
 
 async function doSetMemory(value, label) {
   const key = setKeyEl.value.trim();
@@ -2244,11 +2322,8 @@ async function doSetMemory(value, label) {
 function parseJsonValue() {
   const text = setValueEl.value.trim();
   if (text === "") throw new Error("值不能为空");
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new Error("值不是合法 JSON（字符串需要双引号）");
-  }
+  try { return JSON.parse(text); }
+  catch (e) { throw new Error("值不是合法 JSON（字符串需要双引号）"); }
 }
 
 btnSet.addEventListener("click", () => withLoading(btnSet, async () => {
@@ -2280,8 +2355,7 @@ btnSetArray.addEventListener("click", () => withLoading(btnSetArray, async () =>
 btnDelName.addEventListener("click", () => withLoading(btnDelName, async () => {
   const names = delNameEl.value.split(/[,，\s]+/).map(s => s.trim()).filter(s => s !== "");
   if (names.length === 0) throw new Error("请先填写要删除的键名");
-
-  const data = assertOk(await apiPost(API_MEM_DEL, { names: names }), "删除失败");
+  const data = assertOk(await apiPost(API_MEM_DEL, { names }), "删除失败");
   const erased = (data && data.erased != null) ? data.erased : names.length;
   toast("已删除 " + erased + " 项", "ok");
   showSetResult("按键名删除：" + names.join(", ") + " · 已删除 " + erased + " 项");
@@ -2291,8 +2365,7 @@ btnDelName.addEventListener("click", () => withLoading(btnDelName, async () => {
 btnDelPrefix.addEventListener("click", () => withLoading(btnDelPrefix, async () => {
   const prefix = delPrefixEl.value.trim();
   if (!prefix) throw new Error("请先填写前缀");
-
-  const data = assertOk(await apiPost(API_MEM_DEL, { prefix: prefix }), "删除失败");
+  const data = assertOk(await apiPost(API_MEM_DEL, { prefix }), "删除失败");
   const erased = (data && data.erased != null) ? data.erased : "-";
   toast("已删除 " + erased + " 项（前缀 " + prefix + "）", "ok");
   showSetResult("按前缀删除：" + prefix + " · 已删除 " + erased + " 项");
@@ -2300,11 +2373,8 @@ btnDelPrefix.addEventListener("click", () => withLoading(btnDelPrefix, async () 
 }));
 
 // ============================================================
-// 面板五：摄像头标定
-// 前端可配 7 项：path / cols / rows / distance / matrixName / coeffsName / commonConfigPath
-// （imageName 与 openCamera 属于内部字段，不再对外暴露）
+// 面板五（Tab - 摄像头标定）
 // ============================================================
-
 let calibPolling = false;
 
 function fillCalibForm(cfg) {
@@ -2341,7 +2411,6 @@ function collectCalibForm() {
     }
     body[k] = n;
   }
-
   return body;
 }
 
@@ -2349,11 +2418,7 @@ function setCalibBadge(state, text) {
   calibStateBadge.className = "calib-badge " + (state || "idle");
   calibStateBadge.textContent = text || state || "未开始";
 }
-
-function setCalibProgress(on) {
-  calibProgress.classList.toggle("show", !!on);
-}
-
+function setCalibProgress(on) { calibProgress.classList.toggle("show", !!on); }
 function setCalibResult(text, kind) {
   calibResultEl.className = "calib-result" + (kind ? " " + kind : "");
   calibResultEl.textContent = text == null || text === "" ? "—" : String(text);
@@ -2380,15 +2445,12 @@ btnCalibRefresh.addEventListener("click", () => withLoading(btnCalibRefresh, asy
   await loadCalibConfig(false);
 }));
 
-// 打开标定图片所在文件夹（由后端调用系统文件管理器）
 btnCalibOpenFolder.addEventListener("click", () => withLoading(btnCalibOpenFolder, async () => {
-  // 先保存当前表单里的 path，避免用户改了路径没保存就点，打开的还是旧路径
   const cfg = collectCalibForm();
   if (cfg.path) {
     const setRes = assertOk(await apiPost(API_CALIB_SET, cfg), "保存标定配置失败");
     fillCalibForm(setRes.config);
   }
-
   const data = assertOk(await apiPost(API_CALIB_OPEN_FOLDER, {}), "打开文件夹失败");
   toast("已打开文件夹: " + (data.path || ""), "ok");
 }));
@@ -2401,17 +2463,14 @@ function startCalibPolling() {
     if (!calibPolling) return;
     try {
       const st = await apiGet(API_CALIB_STATUS);
-
       if (st.state === "running") {
         setCalibBadge("running", "标定中…");
         setCalibProgress(true);
         setTimeout(tick, 1000);
         return;
       }
-
       calibPolling = false;
       setCalibProgress(false);
-
       if (st.state === "done") {
         setCalibBadge("done", "成功");
         setCalibResult(st.result || "标定成功", "ok");
@@ -2430,7 +2489,6 @@ function startCalibPolling() {
       setCalibResult("查询标定状态失败：" + e.message, "err");
     }
   };
-
   tick();
 }
 
@@ -2438,14 +2496,12 @@ btnCalibStart.addEventListener("click", () => withLoading(btnCalibStart, async (
   const cfg = collectCalibForm();
   const setRes = assertOk(await apiPost(API_CALIB_SET, cfg), "保存标定配置失败");
   fillCalibForm(setRes.config);
-
   assertOk(await apiPost(API_CALIB_START, {}), "启动标定失败");
 
   setCalibBadge("running", "标定中…");
   setCalibResult("标定已启动，正在处理，请稍候…", "");
   setCalibProgress(true);
   toast("标定已启动", "ok");
-
   startCalibPolling();
 }));
 
@@ -2463,13 +2519,294 @@ btnCalibStart.addEventListener("click", () => withLoading(btnCalibStart, async (
       setCalibBadge("failed", "失败");
       setCalibResult(st.result || "标定失败", "err");
     }
-  } catch (e) {
-    /* 静默 */
-  }
+  } catch (e) { }
 })();
 
 // ============================================================
-// 启动：首屏立即拉一次，然后开启各自轮询
+// 面板六（Tab - 手眼标定）
+// ============================================================
+let hePolling = false;
+
+function fillHeadEyeForm(cfg) {
+  if (!cfg) return;
+  hePathEl.value        = cfg.path ?? "";
+  heCommonCfgEl.value   = cfg.commonConfigPath ?? "";
+  heColsEl.value        = cfg.cols ?? "";
+  heRowsEl.value        = cfg.rows ?? "";
+  heDistanceEl.value    = cfg.distance ?? "";
+  heMatrixNameEl.value  = cfg.matrixName ?? "";
+  heCoeffsNameEl.value  = cfg.coeffsName ?? "";
+  heRGimbalNameEl.value = cfg.R_gimbal2imubodyName ?? "";
+  heRCameraNameEl.value = cfg.R_camera2gimbalName ?? "";
+  heTCameraNameEl.value = cfg.t_camera2gimbalName ?? "";
+}
+
+function collectHeadEyeForm() {
+  const body = {};
+  const strFields = [
+    ["path",                 hePathEl.value.trim()],
+    ["commonConfigPath",     heCommonCfgEl.value.trim()],
+    ["matrixName",           heMatrixNameEl.value.trim()],
+    ["coeffsName",           heCoeffsNameEl.value.trim()],
+    ["R_gimbal2imubodyName", heRGimbalNameEl.value.trim()],
+    ["R_camera2gimbalName",  heRCameraNameEl.value.trim()],
+    ["t_camera2gimbalName",  heTCameraNameEl.value.trim()]
+  ];
+  for (const [k, v] of strFields) if (v !== "") body[k] = v;
+
+  const intFields = [
+    ["cols",     heColsEl.value],
+    ["rows",     heRowsEl.value],
+    ["distance", heDistanceEl.value]
+  ];
+  for (const [k, v] of intFields) {
+    if (v === "") continue;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error(k + " 必须是正整数（当前值：" + v + "）");
+    }
+    body[k] = n;
+  }
+  return body;
+}
+
+function setHeadEyeBadge(state, text) {
+  heStateBadge.className = "calib-badge " + (state || "idle");
+  heStateBadge.textContent = text || state || "未开始";
+}
+function setHeadEyeProgress(on) { heProgress.classList.toggle("show", !!on); }
+function setHeadEyeResult(text, kind) {
+  heResultEl.className = "calib-result" + (kind ? " " + kind : "");
+  heResultEl.textContent = text == null || text === "" ? "—" : String(text);
+}
+
+async function loadHeadEyeConfig(silent) {
+  try {
+    const data = assertOk(await apiGet(API_HE_GET), "读取手眼标定配置失败");
+    fillHeadEyeForm(data.config);
+    if (!silent) toast("手眼标定配置已刷新", "ok");
+  } catch (e) {
+    if (!silent) toast("读取手眼标定配置失败：" + e.message, "err");
+  }
+}
+
+btnHeadEyeSave.addEventListener("click", () => withLoading(btnHeadEyeSave, async () => {
+  const body = collectHeadEyeForm();
+  const data = assertOk(await apiPost(API_HE_SET, body), "保存手眼标定配置失败");
+  fillHeadEyeForm(data.config);
+  toast("手眼标定配置已保存", "ok");
+}));
+
+btnHeadEyeRefresh.addEventListener("click", () => withLoading(btnHeadEyeRefresh, async () => {
+  await loadHeadEyeConfig(false);
+}));
+
+btnHeadEyeOpenFolder.addEventListener("click", () => withLoading(btnHeadEyeOpenFolder, async () => {
+  const cfg = collectHeadEyeForm();
+  if (cfg.path) {
+    const setRes = assertOk(await apiPost(API_HE_SET, cfg), "保存手眼标定配置失败");
+    fillHeadEyeForm(setRes.config);
+  }
+  const data = assertOk(await apiPost(API_HE_OPEN_FOLDER, {}), "打开文件夹失败");
+  toast("已打开文件夹: " + (data.path || ""), "ok");
+}));
+
+function startHeadEyePolling() {
+  if (hePolling) return;
+  hePolling = true;
+
+  const tick = async () => {
+    if (!hePolling) return;
+    try {
+      const st = await apiGet(API_HE_STATUS);
+      if (st.state === "running") {
+        setHeadEyeBadge("running", "标定中…");
+        setHeadEyeProgress(true);
+        setTimeout(tick, 1000);
+        return;
+      }
+      hePolling = false;
+      setHeadEyeProgress(false);
+      if (st.state === "done") {
+        setHeadEyeBadge("done", "成功");
+        setHeadEyeResult(st.result || "手眼标定成功", "ok");
+        toast("手眼标定成功：" + (st.result || ""), "ok");
+      } else if (st.state === "failed") {
+        setHeadEyeBadge("failed", "失败");
+        setHeadEyeResult(st.result || "手眼标定失败", "err");
+        toast("手眼标定失败：" + (st.result || ""), "err");
+      } else {
+        setHeadEyeBadge("idle", "未开始");
+      }
+    } catch (e) {
+      hePolling = false;
+      setHeadEyeProgress(false);
+      setHeadEyeBadge("failed", "查询失败");
+      setHeadEyeResult("查询手眼标定状态失败：" + e.message, "err");
+    }
+  };
+  tick();
+}
+
+btnHeadEyeStart.addEventListener("click", () => withLoading(btnHeadEyeStart, async () => {
+  const cfg = collectHeadEyeForm();
+  const setRes = assertOk(await apiPost(API_HE_SET, cfg), "保存手眼标定配置失败");
+  fillHeadEyeForm(setRes.config);
+  assertOk(await apiPost(API_HE_START, {}), "启动手眼标定失败");
+
+  setHeadEyeBadge("running", "标定中…");
+  setHeadEyeResult("手眼标定已启动，正在处理，请稍候…", "");
+  setHeadEyeProgress(true);
+  toast("手眼标定已启动", "ok");
+  startHeadEyePolling();
+}));
+
+(async function syncHeadEyeOnBoot() {
+  try {
+    const st = await apiGet(API_HE_STATUS);
+    if (st.state === "running") {
+      setHeadEyeBadge("running", "标定中…");
+      setHeadEyeProgress(true);
+      startHeadEyePolling();
+    } else if (st.state === "done") {
+      setHeadEyeBadge("done", "成功");
+      setHeadEyeResult(st.result || "手眼标定成功", "ok");
+    } else if (st.state === "failed") {
+      setHeadEyeBadge("failed", "失败");
+      setHeadEyeResult(st.result || "手眼标定失败", "err");
+    }
+  } catch (e) { }
+})();
+
+// ============================================================
+// ⚡ 一键标定：自动「保存摄像头配置 → 启动 → 等待 → 保存手眼配置 → 启动 → 等待」
+// ============================================================
+
+/**
+ * 检查是否有任一标定正在运行
+ */
+async function anyCalibRunning() {
+  try {
+    const [a, b] = await Promise.all([
+      apiGet(API_CALIB_STATUS).catch(() => null),
+      apiGet(API_HE_STATUS).catch(() => null)
+    ]);
+    return (a && a.state === "running") || (b && b.state === "running");
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * 轮询某个标定直到结束（running → done/failed）
+ * @param {"calib"|"he"} kind
+ * @returns {Promise<boolean>} 成功返回 true
+ */
+function waitCalibStatus(kind) {
+  const api = (kind === "calib") ? API_CALIB_STATUS : API_HE_STATUS;
+  return new Promise((resolve) => {
+    const tick = async () => {
+      try {
+        const st = await apiGet(api);
+        if (st.state === "running") {
+          if (kind === "calib") {
+            setCalibBadge("running", "标定中…");
+            setCalibProgress(true);
+          } else {
+            setHeadEyeBadge("running", "标定中…");
+            setHeadEyeProgress(true);
+          }
+          setTimeout(tick, 1000);
+          return;
+        }
+        // 已结束
+        if (kind === "calib") setCalibProgress(false);
+        else                   setHeadEyeProgress(false);
+
+        if (st.state === "done") {
+          if (kind === "calib") {
+            setCalibBadge("done", "成功");
+            setCalibResult(st.result || "摄像头标定成功", "ok");
+          } else {
+            setHeadEyeBadge("done", "成功");
+            setHeadEyeResult(st.result || "手眼标定成功", "ok");
+          }
+          resolve(true);
+        } else if (st.state === "failed") {
+          if (kind === "calib") {
+            setCalibBadge("failed", "失败");
+            setCalibResult(st.result || "摄像头标定失败", "err");
+          } else {
+            setHeadEyeBadge("failed", "失败");
+            setHeadEyeResult(st.result || "手眼标定失败", "err");
+          }
+          resolve(false);
+        } else {
+          resolve(false);  // idle 等异常状态
+        }
+      } catch (e) {
+        resolve(false);
+      }
+    };
+    tick();
+  });
+}
+
+btnOneClickCalib.addEventListener("click", () => withLoading(btnOneClickCalib, async () => {
+  // 1) 前置检查：不能有标定正在跑
+  if (await anyCalibRunning()) {
+    throw new Error("有标定正在进行，请等待完成后再试");
+  }
+
+  // 2) 切到摄像头 Tab
+  switchCalibTab("camera");
+  await new Promise(r => setTimeout(r, 150));  // 让 UI 渲染一帧
+
+  // 3) 保存摄像头配置 + 启动
+  const calibCfg = collectCalibForm();
+  const setRes1 = assertOk(await apiPost(API_CALIB_SET, calibCfg), "保存摄像头标定配置失败");
+  fillCalibForm(setRes1.config);
+
+  assertOk(await apiPost(API_CALIB_START, {}), "启动摄像头标定失败");
+  setCalibBadge("running", "标定中…");
+  setCalibResult("【一键标定】步骤 1/2：摄像头标定已启动，请稍候…", "");
+  setCalibProgress(true);
+  toast("【一键标定】步骤 1/2：摄像头标定已启动", "ok");
+
+  // 4) 等待摄像头标定结束
+  const ok1 = await waitCalibStatus("calib");
+  if (!ok1) {
+    toast("【一键标定】摄像头标定未成功，已中止（不会执行手眼标定）", "err");
+    return;
+  }
+
+  // 5) 切到手眼 Tab
+  switchCalibTab("headeye");
+  await new Promise(r => setTimeout(r, 200));
+
+  // 6) 保存手眼配置 + 启动
+  const heCfg = collectHeadEyeForm();
+  const setRes2 = assertOk(await apiPost(API_HE_SET, heCfg), "保存手眼标定配置失败");
+  fillHeadEyeForm(setRes2.config);
+
+  assertOk(await apiPost(API_HE_START, {}), "启动手眼标定失败");
+  setHeadEyeBadge("running", "标定中…");
+  setHeadEyeResult("【一键标定】步骤 2/2：手眼标定已启动，请稍候…", "");
+  setHeadEyeProgress(true);
+  toast("【一键标定】步骤 2/2：手眼标定已启动", "ok");
+
+  // 7) 等待手眼标定结束
+  const ok2 = await waitCalibStatus("he");
+  if (!ok2) {
+    toast("【一键标定】手眼标定未成功", "err");
+    return;
+  }
+
+  toast("【一键标定】摄像头 + 手眼 全部完成！", "ok");
+}));
+
+// ============================================================
+// 启动
 // ============================================================
 (async function bootstrap() {
   await pollMemory();
@@ -2477,6 +2814,7 @@ btnCalibStart.addEventListener("click", () => withLoading(btnCalibStart, async (
   await loadChains(false);
   await pollRunStatus();
   await loadCalibConfig(true);
+  await loadHeadEyeConfig(true);
   renderEditorSkills();
 })();
 

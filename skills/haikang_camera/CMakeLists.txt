@@ -53,43 +53,24 @@ endif()
 # ============================================================
 # 海康 MVS SDK
 # ============================================================
-# 旧版本这里只写了一句 link_directories(${MVS_LIB_DIR})，但这个变量从来没被定义过，
-# 展开就是空的；rpath 里的 ${MVS_LIB_DIR} 同样为空。现在统一定义清楚：
-#   MVS_ROOT      : SDK 根目录（只用来取头文件，机器相关所以做成 CACHE 可覆盖）
-#   MVS_DIR       : 本技能自带的 MVS/ 目录，MinGW 用的导入库和运行时 DLL 都在这里
-#   MVS_IMPORT_LIB: 链接时用的导入库
-set(MVS_ROOT "E:/APP/MVS/Development" CACHE PATH "海康 MVS SDK 根目录（取 Includes）")
-set(MVS_INCLUDE_DIR "${MVS_ROOT}/Includes")
-set(MVS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/MVS")
+set(MVS_ROOT "/opt/MVS")
+set(MVS_INCLUDE_DIR "${MVS_ROOT}/include")
+set(MVS_LIB_DIR "${MVS_ROOT}/lib/64")
 
-if(WIN32)
-    set(MVS_IMPORT_LIB "${MVS_DIR}/libMvCameraControl.a")
-else()
-    # Linux 上 MVS 提供的是 libMvCameraControl.so，装完通常在 /opt/MVS/lib/64
-    set(MVS_IMPORT_LIB "")
-    foreach(_cand
-            "${MVS_DIR}/libMvCameraControl.so"
-            "${MVS_ROOT}/Libraries/linux64/libMvCameraControl.so"
-            "/opt/MVS/lib/64/libMvCameraControl.so")
-        if(EXISTS "${_cand}")
-            set(MVS_IMPORT_LIB "${_cand}")
-            break()
-        endif()
-    endforeach()
-endif()
+# ★ 关键修复：MVS_IMPORT_LIB 之前从未被定义，导致 link 时展开为空，海康 SDK 根本没链上，
+#   编译能过（Linux 共享库默认允许未定义符号），但运行时加载 .so 时才报
+#   "undefined symbol: MV_CC_EnumDevices"。
+set(MVS_IMPORT_LIB "${MVS_LIB_DIR}/libMvCameraControl.so")
 
-if(NOT EXISTS "${MVS_INCLUDE_DIR}/MvCameraControl.h")
-    message(FATAL_ERROR
-        "找不到海康 MVS 头文件: ${MVS_INCLUDE_DIR}/MvCameraControl.h\n"
-        "请用 -DMVS_ROOT=<MVS SDK 根目录> 指定（该目录下应当有 Includes/）。")
-endif()
+link_directories(${MVS_LIB_DIR})
 
-if(NOT MVS_IMPORT_LIB OR NOT EXISTS "${MVS_IMPORT_LIB}")
-    message(FATAL_ERROR
-        "找不到 MVS 导入库: '${MVS_IMPORT_LIB}'\n"
-        "Windows(MinGW) 需要 ${MVS_DIR}/libMvCameraControl.a；\n"
-        "Linux 需要 libMvCameraControl.so（可用 -DMVS_ROOT=... 指定 SDK 位置）。")
+# 提前校验一下 SDK 真的在那，避免编完才发现是运行时问题
+if(NOT EXISTS "${MVS_IMPORT_LIB}")
+    message(WARNING "haikang_camera: 找不到 MVS 库: ${MVS_IMPORT_LIB}（请确认 MVS SDK 已安装到 ${MVS_ROOT}）")
 endif()
+message(STATUS "haikang_camera: MVS_INCLUDE_DIR = ${MVS_INCLUDE_DIR}")
+message(STATUS "haikang_camera: MVS_IMPORT_LIB  = ${MVS_IMPORT_LIB}")
+message(STATUS "haikang_camera: MVS_LIB_DIR     = ${MVS_LIB_DIR}")
 
 # ============================================================
 # 定位框架库 libtools
@@ -105,14 +86,21 @@ endif()
 #       想要人为指定时用 -DSKILLCONTROL_TOOLS_LIB=<路径>。
 set(SKILLCONTROL_TOOLS_LIB "" CACHE FILEPATH "手动指定 libtools 动态库路径（留空则自动探测）")
 
-set(_tools_candidates
-    "${SKILLCONTROL_TOOLS_LIB}"
-    "${SKILLCONTROL_ROOT}/libtools.dll"           # 发布布局 Windows
-    "${SKILLCONTROL_ROOT}/libtools.so"            # 发布布局 Linux
-    "${SKILLCONTROL_ROOT}/build/bin/libtools.dll" # 源码树 Windows
-    "${SKILLCONTROL_ROOT}/build/lib/libtools.so"  # 源码树 Linux
-    "${SKILLCONTROL_ROOT}/build/lib/libtools.dll" # 源码树（有人手工拷过）
-)
+# ★ 按平台决定文件名，避免 Windows 下误选到 Linux 的 .so（反之亦然）
+if(WIN32)
+    set(_tools_names "libtools.dll")
+else()
+    set(_tools_names "libtools.so")
+endif()
+
+set(_tools_candidates "${SKILLCONTROL_TOOLS_LIB}")
+foreach(_n IN LISTS _tools_names)
+    list(APPEND _tools_candidates
+        "${SKILLCONTROL_ROOT}/${_n}"              # 发布布局
+        "${SKILLCONTROL_ROOT}/build/bin/${_n}"    # 源码树 bin/
+        "${SKILLCONTROL_ROOT}/build/lib/${_n}"    # 源码树 lib/
+    )
+endforeach()
 
 set(TOOLS_LIB "")
 foreach(_cand IN LISTS _tools_candidates)
@@ -159,7 +147,7 @@ endif()
 target_link_libraries(HAIKANG_CAMERA
     PUBLIC
         ${TOOLS_LIB}
-        ${MVS_IMPORT_LIB}
+        ${MVS_IMPORT_LIB}     # ★ 现在有值了，海康 SDK 会真正链上
         ${OpenCV_LIBS}
         fmt::fmt
         spdlog::spdlog
@@ -169,13 +157,15 @@ target_link_libraries(HAIKANG_CAMERA
 )
 
 # ============================================================
-# rpath：运行时能找到框架库和海康运行时 DLL
+# rpath：运行时能找到框架库和海康运行时库
 # ============================================================
 # 直接指向"实际找到那个文件"所在目录，源码树和发布布局都能覆盖。
 # Windows 下 rpath 被忽略（靠 PATH 和 exe 同目录），无副作用。
+# @note 原来是 ${MVS_DIR}（未定义），改成 ${MVS_LIB_DIR}，否则运行时 ldd 找不到
+#       libMvCameraControl.so，还是会报 undefined symbol。
 get_filename_component(TOOLS_LIB_DIR "${TOOLS_LIB}" DIRECTORY)
 
 set_target_properties(HAIKANG_CAMERA PROPERTIES
-    BUILD_RPATH   "${MVS_DIR};${TOOLS_LIB_DIR};${SKILLCONTROL_ROOT}"
-    INSTALL_RPATH "${MVS_DIR};${TOOLS_LIB_DIR};${SKILLCONTROL_ROOT}"
+    BUILD_RPATH   "${MVS_LIB_DIR};${TOOLS_LIB_DIR};${SKILLCONTROL_ROOT}"
+    INSTALL_RPATH "${MVS_LIB_DIR};${TOOLS_LIB_DIR};${SKILLCONTROL_ROOT}"
 )
