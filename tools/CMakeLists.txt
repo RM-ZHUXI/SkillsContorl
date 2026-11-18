@@ -3,11 +3,11 @@ set(SOURCES
     time.cpp
     findskills.cpp
     loadskills.cpp
-    runskillslists.cpp
     memory.cpp
     type.cpp
     assign.cpp
     runskills.cpp
+    state.cpp
 )
 
 

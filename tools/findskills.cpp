@@ -9,18 +9,9 @@ namespace sc::tools
         this->skills_file = tools::read<std::string>(config, "skills_file");
         this->update();
     }
-    bool FindSkills::update(bool force)
+    bool FindSkills::update()
     {
-        // STATUS=true 表示程序已经在跑技能了，默认不允许重扫技能表；
-        // 「没有任何技能链在运行」时由 HTTP 层用 force=true 放行，
-        // 否则界面上的「更新技能」按钮会因为 STATUS 恒为 true 而永远失败
-        if(STATUS && !force)
-        {
-            logger()->warn("[FindSkills] 程序运行中，拒绝重新扫描技能（需要时可传 force=true 强制）");
-            return false;
-        }
 
-        this->skills_map.clear();
         this->last_query_time = this->timer.nowDate() + " " + this->timer.nowTime();
 
         logger()->info("[FindSkills] 更新skills数据");
@@ -33,7 +24,18 @@ namespace sc::tools
 
         res["last_query_time"] =  this->last_query_time;
         res["skills_size"] = this->last_query_count;
-        res["skills"] = this->get_skills();
+        json skills_json = json::array(); 
+        for(const auto& e:skills)
+        {
+            json item;
+            item["author"] = e.second.author;
+            item["description"] = e.second.description;
+            item["name"] = e.second.name;
+            item["url"] = e.second.url;
+            item["version"] = e.second.version;
+            skills_json.push_back(item);
+        }
+        res["skills"] = skills_json;
         try {
             std::ofstream file(skills_file);
             if (!file.is_open()) {
@@ -46,6 +48,7 @@ namespace sc::tools
         }
         return true;
     }
+
     void FindSkills::find_skills_file(const std::string& root_path)
     {
         namespace fs = std::filesystem;
@@ -66,43 +69,74 @@ namespace sc::tools
             fs::path config_path = entry.path() / "config.json";
             
             if (fs::exists(config_path) && fs::is_regular_file(config_path)) {
-                Skill s = read_skills_info(entry.path().string());
-                if(this->skills_map.find(s.name) == this->skills_map.end())
-                    this->skills_map[s.name] = s;
+                SkillConfigInfo s = read_skills_info(entry.path().string());
+                if(this->skills.find(s.name) == this->skills.end())
+                    this->skills[s.name] = std::move(s);
                 else 
-                    throw std::runtime_error("[FindSkills] skill已存在: " + s.name);
+                    throw std::runtime_error("[FindSkills] 更新失败skill已存在: " + s.name);
             }
         }
         
-        this->last_query_count = this->skills_map.size();
+        this->last_query_count = this->skills.size();
     }
-    Skill FindSkills::read_skills_info(const std::string& file_path)
+
+    SkillConfigInfo FindSkills::read_skills_info(const std::string& file_path)
     {
         using json = nlohmann::json;
         try
         {
-            std::ifstream file(file_path + "/config.json");
+            std::filesystem::path cfg_path = std::filesystem::path(file_path) / "config.json";
+            std::ifstream file(cfg_path);
+            
             if (!file.is_open()) 
             {
-                 throw std::runtime_error("[FindSkills] 读取文件失败: " + file_path);
+                throw std::runtime_error("[FindSkills] 无法打开文件: " + cfg_path.string());
             }
 
-            std::string content((std::istreambuf_iterator<char>(file)),std::istreambuf_iterator<char>());
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             file.close();
 
             json config = json::parse(content);
 
-            Skill s;
-
-            s.name = config["name"];
-            s.version = config["version"];
-            s.description = config["description"];
-            const auto& author_field = config["author"];
-            s.url = (std::filesystem::path(file_path) / config["url"].get<std::string>()).string();
-
-            for(auto& author : author_field)
+            if (!config.contains("name") || !config["name"].is_string() ||
+                !config.contains("version") || !config["version"].is_string() ||
+                !config.contains("description") || !config["description"].is_string() ||
+                !config.contains("author") || !config["author"].is_array() ||
+                !config.contains("url") || !config["url"].is_string())
             {
-                s.author.push_back(author.get<std::string>());
+                throw std::runtime_error("[FindSkills] json格式错误: 缺少必要字段或类型不匹配 (" + cfg_path.string() + ")");
+            }
+
+            SkillConfigInfo s;
+            s.name = config["name"].get<std::string>();
+            s.version = config["version"].get<std::string>();
+            s.description = config["description"].get<std::string>();
+            
+            for (const auto& author : config["author"])
+            {
+                if (author.is_string()) {
+                    s.author.push_back(author.get<std::string>());
+                }
+            }
+            /**
+             * @brief 处理文件名
+             */
+            {
+                std::string url_str = config["url"].get<std::string>();
+                
+                std::filesystem::path full_path = std::filesystem::path(file_path) / url_str;
+
+                #ifdef _WIN32
+                    const std::string expected_ext = ".dll";
+                #elif defined(__linux__)
+                    const std::string expected_ext = ".so";
+                #endif
+
+                if (full_path.extension() != expected_ext) {
+                    full_path += expected_ext;
+                }
+
+                s.url = full_path.string();
             }
 
             tools::logger()->info("[FindSkills] 寻找到 skill: " + s.name);
@@ -118,21 +152,10 @@ namespace sc::tools
             throw std::runtime_error("[FindSkills] 读取文件失败: " + std::string(e.what()));
         }
     }
-    std::vector<Skill> FindSkills::get_skills()
+
+    std::map<std::string,SkillConfigInfo> FindSkills::get_skills()
     {
-        std::vector<Skill> skills_list;
-        for(auto e : this->skills_map)
-        {
-            skills_list.push_back(e.second);
-        }
-        return skills_list;
-    }
-    Skill FindSkills::get_skill_once(std::string name)
-    {
-        if(this->skills_map.find(name) == this->skills_map.end())
-            throw std::runtime_error("[FindSkills] " + name + "-skill不存在");
-        
-        return this->skills_map[name];
+        return skills;
     }
 } // namespace tools
 

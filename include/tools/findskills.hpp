@@ -1,18 +1,8 @@
 /**
  * @file        findskills.hpp
- * @brief       skills查找工具头文件
- * @author      时新博 a17398481273@163.com
- * @date        2026-09-17
- * 
- * @version     1.0.1
- * @par         更新update方法，增加全局程序运行状态监测
- * 
- * @version     1.0.2
- * @par         添加get_skill方法
- * 
- * @version     1.2.0
- * @par         将skill方法更新为map而不是version
- *              要求skill不允许重名，添加重名检查  
+ * @brief       skills查找工具头文件,只需负责把查找出来的文件写入skills_file并且保留上一次的SkillInfo
+ * @author      o_O a17398481273@163.com
+ * @date        2026-11-17
  */
 #ifndef FINDSKILLS_HPP
 #define FINDSKILLS_HPP
@@ -37,13 +27,12 @@ namespace sc::tools
 class TOOLS_API FindSkills
 {
 private:
-    std::string skills_url;
-    std::string skills_file;
-    std::map<std::string,Skill> skills_map;
-    std::string last_query_time;
-    int last_query_count;
-
-    sc::tools::Time timer;
+    std::string skills_url;                       ///< skill路径
+    std::string skills_file;                      ///< skill统计文件
+    std::string last_query_time;                  ///< 上一次更新时间
+    std::map<std::string,SkillConfigInfo> skills; ///< skill集合
+    int last_query_count;                         ///< skill个数
+    sc::tools::Time timer;                        ///< 时间管理类
 
     /**
      * @brief       查找skills文件
@@ -55,9 +44,9 @@ private:
     /**
      * @brief       读取单个文件获取skill信息
      * @param       file_path 文件路径(不包含文件名称)
-     * @return      Skill skills信息
+     * @return      SkillConfigInfo skills信息
      */
-    Skill read_skills_info(const std::string& file_path);
+    SkillConfigInfo read_skills_info(const std::string& file_path);
 
 public:
 
@@ -70,27 +59,14 @@ public:
 
     /**
      * @brief       更新skills到json文件中
-     * @param       force 运行中(STATUS=true)时是否也强制重新扫描，默认 false
-     * @return      bool 更新成功返回true
-     * @note        默认在 STATUS=true（程序运行中）时拒绝重扫，避免技能正在被使用时改动技能表；
-     *              HTTP 层在确认"没有任何技能链在运行"之后会用 force=true 调用，
-     *              否则界面上的「更新技能」按钮会因为 STATUS 恒为 true 而永远失败。
      */
-    bool update(bool force = false);
+    bool update();
 
     /**
      * @brief       获取skills列表
-     * @return      std::vector<Skill> skills列表
+     * @return      std::map<std::string,SkillInfo> skills列表
      */
-    std::vector<Skill> get_skills();
-
-    /**
-     * @brief       获取指定skills
-     * @param       name skills名称
-     * @return      Skill skills的详细信息
-     * @throw       std::runtime_error skills不存在
-     */
-    Skill get_skill_once(std::string name);
+    std::map<std::string,SkillConfigInfo> get_skills();
 };
 
 } // namespace tools

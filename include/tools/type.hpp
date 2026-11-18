@@ -1,25 +1,11 @@
 /**
  * @file        type.hpp
- * @brief       全局状态机包装类
- * @author      时新博 a17398481273@163.com
- * @date        2026-09-15
+ * @brief       类型声明
+ * @author      o_O a17398481273@163.com
  * 
- * @version     1.0.0
- *
- * @version     1.1.0
- * @par         新增 SkillList 的 JSON 双向序列化
- *              1. 兼容 skillsList.json 里的 "list" 键（而不是 "skills"）
- *              2. list 数组里既能写技能名字符串，也能写完整 skill 对象
- *              3. 新增 interval 字段（while 模式的轮间隔毫秒）
- *              4. 解析 skill 对象时字段可以缺省（前端只提交 {"name":"xxx"} 也认），
- *                 缺的字段由 FindSkills 在 Assign::resolve 里补全
- *
- * @version     1.2.0
- * @par         interval 语义修正 + 解析容错
- *              1. interval = 0 表示"不等待、全速循环"（原来 0 会被悄悄改成 1000，
- *                 表现就是界面上轮间隔怎么调都还是 1000 ms）；只有负数才回落默认值
- *              2. 容忍手改配置把数字写成字符串（"interval": "300"、"version": 1），
- *                 以前会直接抛 json 异常导致整条链（甚至全部链）加载失败
+ * @date        2026-11-18
+ * @pre
+ * 添加SkillInfo和SkillListInfo声明       
  */
 
 #ifndef TYPE_HPP
@@ -37,6 +23,7 @@
 #include "logger.hpp"
 #include "time.hpp"
 #include "tools_api.hpp"
+#include "loadskills.hpp"
 
 /**
  * @brief 把一个 json 值宽松地转成字符串
@@ -96,7 +83,7 @@ inline int jsonInt(const nlohmann::json& j, const char* key, int def)
 }
 
 /**
- * @brief skills信息
+ * @brief skills信息(旧版)
  */
 struct Skill
 {
@@ -109,7 +96,71 @@ struct Skill
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Skill, name, description, version, author, url)
 
 /**
+ * @brief skill 配置文件信息
+ */
+struct SkillConfigInfo
+{
+    std::string name = "";                                           ///< 名称
+    std::string description = "";                                    ///< 描述
+    std::string version = "";                                        ///< 版本
+    std::string url = "";                                            ///< 运行开始dll库链接位置
+    std::vector<std::string> author;                                 ///< 作者                               
+};
+
+
+/**
+ * @brief skill信息(新版)
+ */
+struct SkillInfo
+{
+    SkillConfigInfo skill;                  ///< skill配置文件信息
+    SkillListInfo* list = nullptr;          ///< 所属于的链
+    bool load = false;                      ///< 是否被加载
+    bool run = false;                       ///< 是否正在运行
+    sc::tools::LoadSkills loadskill;        ///< 加载函数
+
+    /**
+     * @brief 重新载入动态库
+     * @throw 重新载入动态库异常情况或者skill信息异常
+     */
+    void reload()
+    {        
+        try
+        {
+            this->load = false;
+            if(!this->skill.name.empty() || !this->skill.url.empty())throw std::runtime_error("[SkillInfo] reload信息错误");
+            this->loadskill.reload(this->skill.name,skill.url);
+            this->load = true;
+        }
+        catch(const std::exception& e)
+        {
+            throw;
+        }
+        
+    }
+
+    SkillInfo() = default;
+    SkillInfo(const SkillInfo&)            = delete;
+    SkillInfo& operator=(const SkillInfo&) = delete;
+    SkillInfo(SkillInfo&&) noexcept        = default;
+    SkillInfo& operator=(SkillInfo&&) noexcept = default;
+};
+
+/**
+ * @brief skill链信息(新版)
+ */
+struct SkillListInfo
+{
+    std::string name;                         ///< 名称(唯一ID)
+    std::string mode = "once";                ///< 模式 once / while
+    int         interval = 1000;              ///< while 轮间隔(毫秒)，0 = 不等待，<0 按 1000
+    std::vector<SkillInfo*> skills;           ///< 技能列表(按顺序执行)
+};
+
+
+/**
  * @brief 技能链（skill 链）
+ * @note  旧版
  */
 struct SkillList
 {

@@ -240,10 +240,6 @@ bool Runskills::start(const SkillList& list)
         }
     }
 
-    // ★ 回收上一条已经跑完但还没 join 的线程。
-    //   给一个仍然 joinable 的 std::thread 赋值会直接 std::terminate()：
-    //   "启动 → 停止 → 再启动"就会踩到（stop() 正常路径现在会 join，这里再兜一层，
-    //   防止线程恰好在线程对象被复用之前才结束这种时序）。
     if (chainptr->thread.joinable())
     {
         chainptr->thread.join();
@@ -267,12 +263,6 @@ bool Runskills::start(const SkillList& list)
         std::lock_guard<std::mutex> lock(chainptr->mtx_run);
         chainptr->run = true;
     }
-
-    // ★ 立刻把 state 置成"运行中"（runthread 进去后还会再置一次，幂等）。
-    //   不能只等 worker 线程去置：从 start() 返回到 worker 真正跑起来之间有一个窗口，
-    //   这期间 runningCount() 会少算一条（/api/StartSkillChain 响应里的 running 就是 0），
-    //   更要命的是紧接着调 stop() 会被判成"链已经停止"直接返回失败 ——
-    //   网页上表现就是"刚点了启动又点停止 → 提示该技能链没有运行记录"。
     {
         std::lock_guard<std::mutex> lock(chainptr->mtx_state);
         chainptr->state = true;
