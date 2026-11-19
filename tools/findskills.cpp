@@ -9,8 +9,10 @@ namespace sc::tools
         this->skills_file = tools::read<std::string>(config, "skills_file");
         this->update();
     }
+
     bool FindSkills::update()
     {
+        this->skills.clear();
 
         this->last_query_time = this->timer.nowDate() + " " + this->timer.nowTime();
 
@@ -67,13 +69,17 @@ namespace sc::tools
             }
             
             fs::path config_path = entry.path() / "config.json";
-            
+
             if (fs::exists(config_path) && fs::is_regular_file(config_path)) {
                 SkillConfigInfo s = read_skills_info(entry.path().string());
                 if(this->skills.find(s.name) == this->skills.end())
+                {
                     this->skills[s.name] = std::move(s);
+                    //logger()->debug("[findskill] 文件路径 : {}",config_path.string());
+                }
                 else 
-                    throw std::runtime_error("[FindSkills] 更新失败skill已存在: " + s.name);
+                    throw std::runtime_error("[FindSkills] 更新失败skill已存在: " + s.name +
+                        " (冲突目录: " + entry.path().string() + ")");
             }
         }
         

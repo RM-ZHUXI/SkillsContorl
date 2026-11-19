@@ -23,7 +23,6 @@
 #include "logger.hpp"
 #include "time.hpp"
 #include "tools_api.hpp"
-#include "loadskills.hpp"
 
 /**
  * @brief 把一个 json 值宽松地转成字符串
@@ -94,69 +93,6 @@ struct Skill
     std::vector<std::string> author;                            ///< 作者                               
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Skill, name, description, version, author, url)
-
-/**
- * @brief skill 配置文件信息
- */
-struct SkillConfigInfo
-{
-    std::string name = "";                                           ///< 名称
-    std::string description = "";                                    ///< 描述
-    std::string version = "";                                        ///< 版本
-    std::string url = "";                                            ///< 运行开始dll库链接位置
-    std::vector<std::string> author;                                 ///< 作者                               
-};
-
-
-/**
- * @brief skill信息(新版)
- */
-struct SkillInfo
-{
-    SkillConfigInfo skill;                  ///< skill配置文件信息
-    SkillListInfo* list = nullptr;          ///< 所属于的链
-    bool load = false;                      ///< 是否被加载
-    bool run = false;                       ///< 是否正在运行
-    sc::tools::LoadSkills loadskill;        ///< 加载函数
-
-    /**
-     * @brief 重新载入动态库
-     * @throw 重新载入动态库异常情况或者skill信息异常
-     */
-    void reload()
-    {        
-        try
-        {
-            this->load = false;
-            if(!this->skill.name.empty() || !this->skill.url.empty())throw std::runtime_error("[SkillInfo] reload信息错误");
-            this->loadskill.reload(this->skill.name,skill.url);
-            this->load = true;
-        }
-        catch(const std::exception& e)
-        {
-            throw;
-        }
-        
-    }
-
-    SkillInfo() = default;
-    SkillInfo(const SkillInfo&)            = delete;
-    SkillInfo& operator=(const SkillInfo&) = delete;
-    SkillInfo(SkillInfo&&) noexcept        = default;
-    SkillInfo& operator=(SkillInfo&&) noexcept = default;
-};
-
-/**
- * @brief skill链信息(新版)
- */
-struct SkillListInfo
-{
-    std::string name;                         ///< 名称(唯一ID)
-    std::string mode = "once";                ///< 模式 once / while
-    int         interval = 1000;              ///< while 轮间隔(毫秒)，0 = 不等待，<0 按 1000
-    std::vector<SkillInfo*> skills;           ///< 技能列表(按顺序执行)
-};
-
 
 /**
  * @brief 技能链（skill 链）

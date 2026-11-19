@@ -62,10 +62,10 @@ void onProcessExit()
 {
     if (g_normalExit) return;
 
-    writeStderr("\n[logger] 进程被异常终止：没有走正常退出流程。\n"
-                "[logger] 最常见原因：某个技能（或它调用的第三方库/SDK）直接调用了 exit()。\n"
-                "[logger] 排查：看日志最后一行是哪个技能的输出；"
-                "Linux 下可 gdb --args ./skillcontorl 复现后 bt 看调用栈。\n");
+    // writeStderr("\n[logger] 进程被异常终止：没有走正常退出流程。\n"
+    //             "[logger] 最常见原因：某个技能（或它调用的第三方库/SDK）直接调用了 exit()。\n"
+    //             "[logger] 排查：看日志最后一行是哪个技能的输出；"
+    //             "Linux 下可 gdb --args ./skillcontorl 复现后 bt 看调用栈。\n");
 }
 
 #ifdef __linux__

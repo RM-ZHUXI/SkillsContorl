@@ -23,6 +23,19 @@
 
 namespace sc::tools
 {
+/**
+ * @brief skill 配置文件信息
+ */
+struct SkillConfigInfo
+{
+    std::string name = "";                                           ///< 名称
+    std::string description = "";                                    ///< 描述
+    std::string version = "";                                        ///< 版本
+    std::string url = "";                                            ///< 运行开始dll库链接位置
+    std::vector<std::string> author;                                 ///< 作者                               
+};
+
+
 
 class TOOLS_API FindSkills
 {

@@ -1,13 +1,14 @@
 set(SOURCES
+    state.cpp
     logger.cpp
     time.cpp
     findskills.cpp
     loadskills.cpp
+    threadController.cpp
     memory.cpp
-    type.cpp
-    assign.cpp
-    runskills.cpp
-    state.cpp
+    #type.cpp
+    #assign.cpp
+    #runskills.cpp
 )
 
 

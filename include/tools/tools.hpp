@@ -9,7 +9,7 @@
 #include "loadskills.hpp"
 #include "type.hpp"
 #include "assign.hpp"
-#include "runskillslists.hpp"
 #include "runskills.hpp"
+#include "state.hpp"
 
 #endif

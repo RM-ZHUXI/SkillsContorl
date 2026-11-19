@@ -10,20 +10,17 @@
 #ifndef TOOLS_STATE_HPP
 #define TOOLS_STATE_HPP
 
+#include "threadController.hpp"
 #include "tools_api.hpp"
-#include "type.hpp"
 #include "findskills.hpp"
-#include "logger.hpp"
-
-#include <map>
-#include <string>
+#include "loadskills.hpp"
 
 namespace sc::tools
 {
 /**
  * @brief 固定参数
  */
-const std::string CONFIG = "configs/config.yaml";                  ///< 配置文件路径
+const std::string CONFIG = "configs/config.yaml";                     ///< 配置文件路径
 
 /**
  * @brief 状态量
@@ -34,14 +31,15 @@ extern std::map<std::string,SkillInfo> TOOLS_API SC_ALL_SKILL_INFO;   ///< 所�
 /**
  * @brief 功能类
  */
-extern FindSkills findSkills(CONFIG);
+extern FindSkills findSkills;                                         ///< skill 寻找器
+extern ThreadController threadController;                             ///< 线程管理器
 
 /**
  * @brief 刷新skill方法
  * @par
  * 直接写入 SC_ALL_SKILL_INFO,并且对于新的skill加载到内存
  */
-void updateSkill();
+void TOOLS_API updateSkill();
 
 } // namespace sc::tools
 
