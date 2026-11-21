@@ -2,7 +2,7 @@
  * @file        loadskills.hpp
  * @brief       skill运行工具
  * @author      o_O a17398481273@163.com
- * @date        2026-11-18
+ * @date        2026-11-21
  * 
  * @version     1.2.0
  * @par         添加强制关闭函数 stop()        
@@ -169,9 +169,9 @@ struct SkillInfo
 {
     SkillConfigInfo skill;                  ///< skill配置文件信息
     bool load = false;                      ///< 是否被加载
-    bool run = false;                       ///< 是否正在运行
+    bool used = false;                      ///< 是否被使用
     sc::tools::LoadSkills loadskill;        ///< 加载函数
-
+    
     /**
      * @brief 重新载入动态库
      * @throw 重新载入动态库异常情况或者skill信息异常
@@ -198,18 +198,6 @@ struct SkillInfo
     SkillInfo(SkillInfo&&) noexcept        = default;
     SkillInfo& operator=(SkillInfo&&) noexcept = default;
 };
-
-/**
- * @brief skill链信息(新版)
- */
-struct SkillListInfo
-{
-    std::string name;                         ///< 名称(唯一ID)
-    std::string mode = "once";                ///< 模式 once / while
-    int         interval = 1000;              ///< while 轮间隔(毫秒)，0 = 不等待，<0 按 1000
-    std::vector<SkillInfo*> skills;           ///< 技能列表(按顺序执行)
-};
-
 
 } // namespace tools
 

@@ -28,7 +28,7 @@ void ThreadItem::run()
         if (info_.workerId == std::this_thread::get_id()) return;
     }
 
-    std::lock_guard<std::mutex> joinLock(mtx_join_);  
+    std::unique_lock<std::mutex> joinLock(mtx_join_);  
 
     if (thread_.joinable()) {                      
         bool running;
@@ -52,6 +52,7 @@ void ThreadItem::run()
                 std::lock_guard<std::mutex> lk(info_.mtx_run);
                 info_.workerId = std::this_thread::get_id();  
             }
+            {
             struct Guard {                                  
                 ThreadInfo& i;
                 ~Guard() {
@@ -72,6 +73,12 @@ void ThreadItem::run()
             {
                 logger()->error("线程出现未知错误");
             }
+            } // Guard 析构，run 已置 false
+            // 线程函数已执行完毕，自动 detach 回收本线程
+            if (mtx_join_.try_lock()) {
+                if (thread_.joinable()) thread_.detach();
+                mtx_join_.unlock();
+            }
         });
     } catch (...) {
         std::lock_guard<std::mutex> lk(info_.mtx_run);      
@@ -79,6 +86,7 @@ void ThreadItem::run()
         info_.workerId = std::thread::id{};
         throw;
     }
+    joinLock.unlock();
 }
 
 void ThreadItem::stop()

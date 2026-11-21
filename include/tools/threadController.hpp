@@ -3,7 +3,7 @@
  * @brief       类型声明
  * @author      o_O a17398481273@163.com
  * 
- * @date        2026-11-18
+ * @date        2026-11-21
  * @pre
  * 线程管理器       
  */
@@ -142,6 +142,17 @@ ThreadItem& operator [](const std::string &name)
  */
 bool erase(const std::string &name);
 
+/**
+ * @brief 线程是否存在
+ * @return false 不存在
+ * @return true  存在
+ */
+bool exist(const std::string &name)
+{
+    auto e = this->thread_.find(name);
+    if(e == this->thread_.end())return false;
+    else return true;
+}
 };// class ThreadController
 
 } // namespace sc::tools

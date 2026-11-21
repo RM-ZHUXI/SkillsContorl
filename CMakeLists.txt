@@ -29,6 +29,7 @@ if(NOT TARGET yaml-cpp::yaml-cpp)
 endif()
 
 # 添加子目录
+add_subdirectory(group)
 add_subdirectory(tools)
 #add_subdirectory(net)
 #add_subdirectory(functions)

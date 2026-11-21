@@ -24,6 +24,7 @@ const std::string CONFIG = "configs/config.yaml";                     ///< 配�
 
 /**
  * @brief 状态量
+ * @note  SC_ALL_SKILL_INFO 并不会删除,只会被叠加,所以说指向的元素不会被删除
  */
 extern bool TOOLS_API SC_ALL_SO_READY;                                ///< 所有SKILL是否载入准备完毕
 extern std::map<std::string,SkillInfo> TOOLS_API SC_ALL_SKILL_INFO;   ///< 所有SKILL信息 名称->SkillInfo

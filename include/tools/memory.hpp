@@ -30,7 +30,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include "tools/tools_api.hpp"
+#include "tools_api.hpp"
 
 namespace sc::tools
 {
