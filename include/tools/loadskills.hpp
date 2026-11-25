@@ -19,8 +19,8 @@
 #define LOADSKILLS_HPP
 
 #include "findskills.hpp"
-#include "memory.hpp"
 #include "tools_api.hpp"
+#include "group/memory.hpp"
 
 #include <string>
 #include <vector>
@@ -129,7 +129,7 @@ public:
      * @param       memory 内存管理器，原样传给技能的 init
      * @note        解析入口符号 + 调用一次 init()。重复调用是安全的
      */
-    void load(tools::Memory *memory);
+    void load(group::memory *memory);
 
     /**
      * @brief       执行一次 run()
@@ -150,7 +150,7 @@ public:
      *      -> void end();                         // 可选（extern "C"）
      * @param memory 内存管理器，原样传给技能
      */
-    void run(tools::Memory *memory);
+    void run(group::memory *memory);
 
     /**
      * @brief 显式卸载动态库

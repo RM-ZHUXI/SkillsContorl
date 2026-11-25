@@ -7,8 +7,6 @@ set(SOURCES
     threadController.cpp
     memory.cpp
     #type.cpp
-    #assign.cpp
-    #runskills.cpp
 )
 
 

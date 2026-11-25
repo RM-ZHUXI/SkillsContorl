@@ -140,9 +140,9 @@ void LoadSkills::resolveSymbols()
 /**
  * @brief 加载并初始化
  */
-void LoadSkills::load(tools::Memory *memory)
+void LoadSkills::load(group::memory *memory)
 {
-    using InitFunc = void (*)(Memory*);
+    using InitFunc = void (*)(group::memory*);
 
     if (memory == nullptr)throw std::runtime_error("[LoadSkills] 传入的 memory 为空: " + libPath);
 
@@ -204,7 +204,7 @@ void LoadSkills::end()
     }
 }
 
-void LoadSkills::run(tools::Memory *memory)
+void LoadSkills::run(group::memory *memory)
 {
     load(memory);
     runOnce();
