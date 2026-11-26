@@ -1,8 +1,8 @@
 /**
  * @file        skillList.hpp
- * @brief       公共内存管理器
+ * @brief       技能链管理器
  * @author      o_O a17398481273@163.com
- * @date        2026-11-25
+ * @date        2026-11-26
  */
 
 #ifndef GROUP_SKILLLIST_HPP
@@ -110,7 +110,7 @@ SkillList(const std::string &name,memory *mem)
 }
 
 /**
- * @brief  设置skills链
+ * @brief  设置skills链name
  * @param  name 名称链
  * @return true  成功设置
  * @return false 设置失败(没有skill/skill被使用/skill正在运行/未知错误)
@@ -121,13 +121,27 @@ bool set(const std::string &name)
     {
         return false;
     }
+    
+    if(!tools::threadController.erase(this->info_.threadName))
+    {
+        return false;
+    }
+
+    info_.thread = nullptr;
+    info_.threadName = "list." + name;
+    tools::threadController.addThread(info_.threadName,
+        [this](tools::ThreadInfo* input)
+        {
+            this->func(input);
+        });
+    this->info_.thread = &tools::threadController[info_.threadName];
 
     this->info_.name = name;
     return true;
 }
 
 /**
- * @brief  设置skills链
+ * @brief  设置skills链list
  * @param  std::vector<std::string> list 名称链
  * @return true  成功设置
  * @return false 设置失败(没有skill/skill被使用/未知错误)

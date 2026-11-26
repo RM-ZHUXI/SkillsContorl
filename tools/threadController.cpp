@@ -73,8 +73,7 @@ void ThreadItem::run()
             {
                 logger()->error("线程出现未知错误");
             }
-            } // Guard 析构，run 已置 false
-            // 线程函数已执行完毕，自动 detach 回收本线程
+            } 
             if (mtx_join_.try_lock()) {
                 if (thread_.joinable()) thread_.detach();
                 mtx_join_.unlock();
@@ -94,6 +93,11 @@ void ThreadItem::stop()
     {
         std::lock_guard<std::mutex> lk(info_.mtx_run);
         if (info_.workerId == std::this_thread::get_id()) return;
+    }
+
+    if(!this->isRun())
+    {
+        return;
     }
 
     {

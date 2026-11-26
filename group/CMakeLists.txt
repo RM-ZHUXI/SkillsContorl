@@ -1,5 +1,7 @@
 set(SOURCES
     memory.cpp
+    skillList.cpp
+    skillgroup.cpp
 )
 
 
